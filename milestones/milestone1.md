@@ -9,9 +9,7 @@
 
 ## Abstract
 
-100-200 words explaining the general idea for your project.  Be sure to read the project requirements below and consider how you'll incorporate the various components.
-
-*These details can & will change as much as needed over the next few weeks.*
+We plan to analyze Chicago rideshare trips to understand when, where, and perhaps why riders choose Uber or Lyft over public transportation. We will combine rideshare trip data from the City of Chicago Data Portal with CTA route, service, and real-time data, reconciling these sources at the neighborhood and census tract level. Using network-based analysis, we will identify common rideshare routes and evaluate whether trips have reasonable public transit alternatives based on travel time, cost, time of day, and neighborhood-level transit access. We will assess whether rideshare usage primarily reflects convenience preferences among higher-income riders or unmet transit needs, recognizing that both dynamics likely play a role. We might potentially incorporate Census data to contextualize trips using neighborhood demographics. Results will be presented through an interactive dashboard that demonstrates answers to our research questions and allows users to explore common trips and compare rideshare and transit options, including differences in price, duration, and estimated emissions. Findings may inform CTA service planning and strategies to shift trips toward public transportation.
 
 ## Preliminary Data Sources
 
