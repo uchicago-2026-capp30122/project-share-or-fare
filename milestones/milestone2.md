@@ -46,7 +46,7 @@ By the end of Week 6:
 
 By the end of Week 7:
 - ???: Begin constructing the final visualization (probably a network map) 
-- ???: If we have time: Look into merging in census tract data
+- ???: If we have time: Look into merging in census tract data (understand factors such as income/profession, neighbourhoods etc. of people who prefer rideshare)
 
 Our prototype will ideally be an interactive map using the toy dataset that shows common ride share routes in Chicago and the alternate transit route, and a cost/duration/distance comparison. 
 
