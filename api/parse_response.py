@@ -6,23 +6,29 @@ def parse_response(response_text):
     {lat: _, long: _, year: _, month: _, day: _, hour: _, 
         tripDuration: _, tripDistance: _, tripCost: _}
     """
-    route_list = json.loads(response_text)["routes"]
+    input_dict = json.loads(response_text)
+    if len(input_dict) == 0:
+        return {}
+    route_list = input_dict["routes"]
     walking_distance = 0 # in meters
     walking_duration = 0 # in seconds
     transit_distance = 0 # in meters
     transit_duration = 0 # in seconds
     modes = set()
+
     for route in route_list:
         # route is a dictionary
         for leg in route["legs"]:
             # leg is a dictionary
             for step in leg["steps"]:
                 if step["travelMode"] == "WALK":
-                    walking_distance += step["distanceMeters"]
+                    if "distanceMeters" in step.keys():
+                        walking_distance += step["distanceMeters"]
                     walking_duration += int(step["staticDuration"][:-1])
                     modes.add("WALK")
                 if step["travelMode"] == "TRANSIT":
-                    transit_distance += step["distanceMeters"]
+                    if "distanceMeters" in step.keys():
+                        transit_distance += step["distanceMeters"]
                     transit_duration += int(step["staticDuration"][:-1])
                     mode = step["transitDetails"]["transitLine"]["vehicle"]["type"]
                     modes.add(mode)

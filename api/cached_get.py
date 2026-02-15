@@ -3,11 +3,12 @@ import httpx
 import time
 from datetime import datetime
 from pathlib import Path
-from .__main__ import API_KEY
+import os
 
 
 
 # GLOBALS
+API_KEY = os.environ["API_KEY"] # DO NOT change this line!
 CACHE_DIR = Path(__file__).parent / "_cache"
 URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
@@ -77,7 +78,7 @@ def get_json_request_params(origin: tuple[str,str], destination: tuple[str,str],
 
 
 def cached_get(origin: tuple[str,str], destination: tuple[str,str], 
-               year: str, month:str, day: str, hour: str) -> str:
+               year: str, month:str, day: str, hour: str, id: str) -> str:
     """
     Retrieves the response text from the cache using the Trip ID if it exists,
     otherwise makes another API call and caches that result.
@@ -86,20 +87,23 @@ def cached_get(origin: tuple[str,str], destination: tuple[str,str],
 
     # If CACHE_DIR does not exist, create it
     if not CACHE_DIR.exists():
+        print("Created _cache directory")
         CACHE_DIR.mkdir()
 
     # If cache key already exists in CACHE_DIR, return that that response
-    cache_key = f"O{origin[0]}_{origin[1]}_D{destination[0]}_{destination[1]}_T{year}-{month}-{day}-{hour}"
-    cache_key_path = CACHE_DIR / cache_key
+    cache_key_path = CACHE_DIR / id
     if cache_key_path.exists():
         with open(cache_key_path, "r") as f:
             cached_response = f.read()
+        print("Returning cached response")
         return cached_response
     
     # Otherwise, make the API call and store response in CACHE_DIR
     else:
         time.sleep(0.5)
-        headers, data = get_json_request_params(origin, destination, year, month, day, hour)
+        headers, data = get_json_request_params(origin, destination, year, 
+                                                month, day, hour)
+        print(f"Making API call for {id}")
         response = httpx.post(URL, follow_redirects=True, 
                               headers = headers,
                               json = data)
