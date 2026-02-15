@@ -8,12 +8,12 @@ We plan to analyze Chicago rideshare trips to understand when, where, and perhap
 
 ### Data Source #1
 
-Source URL: {https://...}
-Source Type: {Scraped/Bulk Data/API}
-Approximate Number of Records (rows):
-Approximate Number of Attributes (columns): 
-Current Status: {At this point, you should have interacted with your data, describe the current status. Have you written code for an API or web scraper yet, explored the data, etc.?}
-Challenges: {Any challenges or uncertainty about the data at this point?}
+Source URL: {https://data.cityofchicago.org/Transportation/Transportation-Network-Providers-Trips-2025-/6dvr-xwnh/about_data}
+Source Type: Bulk data
+Approximate Number of Records (rows): 93.5M
+Approximate Number of Attributes (columns): 24
+Current Status: Molly and Sabrina have downloaded the dataset and have done some exploratory filtration in a Jupyter notebook. We are explorint different ways to make the dataset scope smaller and the resolution courser so the dataset is easier to work with, including clutering rides by location and time such that the smallest resolution in the dataset is about 100 meteres and one hour, not .000001 lat/long and 1 second. Next, we will create a toy dataset with about 100 entries to work on other pieces of the project while concurrently finalizing the rows we want to work with.
+Challenges: The dataset is massive, so operations are slow. Additionally, Sabrina's starting csv is different than Molly's (they applied different filters from the source website), but after data cleaning using pandas, the datasets still have different numbers of rows even through the same filters have been applied to both. We're working on exploring the differences between the datasets to make sure we understand the data we are working with.
 
 ### Data Source #2
 Source URL: (https://routes.googleapis.com/directions/v2:computeRoutes)
@@ -46,7 +46,7 @@ By the end of Week 6:
 
 By the end of Week 7:
 - ???: Begin constructing the final visualization (probably a network map) 
-- ???: If we have time: Look into merging in census tract data
+- ???: If we have time: Look into merging in census tract data (understand factors such as income/profession, neighbourhoods etc. of people who prefer rideshare)
 
 Our prototype will ideally be an interactive map using the toy dataset that shows common ride share routes in Chicago and the alternate transit route, and a cost/duration/distance comparison. 
 
