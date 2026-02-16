@@ -1,0 +1,6 @@
+api/_cache
+.DS_Store
+.python-version
+api/.DS_Store
+*.pyc
+__pycache__/
