@@ -9,6 +9,8 @@ def join_api_csv(rideshare_data_name, api_response_name) -> pd.DataFrame:
         api_response_name: A string, the name of the api response file
     
     Returns: A pandas dataframe with the merged rideshare and transit data
+
+    Author: Sabrina
     """
     rideshare_data = pd.read_csv(f"./data/{rideshare_data_name}.csv")
     transit_data = pd.read_csv(f"./data/{api_response_name}.csv")
