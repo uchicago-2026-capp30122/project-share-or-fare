@@ -24,13 +24,15 @@ OUTPUT_NAME = "sabrina_500_merged"
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--clean", action="store_true", help="Clean raw CSV")
+    parser.add_argument(
+        "--makecsv", action="store_true", help="Clean raw CSV"
+    )
     parser.add_argument(
         "--join", action="store_true", help="Join transit data into rideshare data"
     )
     args = parser.parse_args()
 
-    if args.clean:
+    if args.makecsv:
         pass
 
     if args.join:
