@@ -4,6 +4,10 @@ import matplotlib
 import datetime as dt
 from zoneinfo import ZoneInfo
 
+# Update random state before running
+SAMPLED = []
+RANDOM_STATE = 11
+
 
 def clean(filename: str) -> pd.DataFrame:
     """
@@ -16,7 +20,7 @@ def clean(filename: str) -> pd.DataFrame:
     Parameters:
         filename: The string for the path to the csv downloaded from Chicago
             Data Portal
-    
+
     Returns: A pandas DataFrame with the cleaned data
 
     Author: Molly
@@ -98,7 +102,7 @@ def clean(filename: str) -> pd.DataFrame:
     return data
 
 
-def group(data: pd.DataFrame) -> pd.DataFrame:
+def group_rides(data: pd.DataFrame) -> pd.DataFrame:
     """
     Grouping by Unique API Call
 
@@ -181,3 +185,40 @@ def format_for_api(data: pd.DataFrame, unique_calls: pd.DataFrame) -> pd.DataFra
     unique_calls["representative_day"] = data["day_type"].map({0: 22, 1: 25, 2: 26})
 
     return unique_calls
+
+
+def sample_and_split(data: pd.DataFrame, size: int):
+    """
+    Draws a sample from our dataset and stores it into 4 separate CSV files.
+    Each csv has size number of rows
+
+    Parameters:
+        data: pandas DataFrame
+        size: int, 1/4 sample size to take
+
+    Writes 4 csv files
+
+    Author: Molly
+    """
+    # update dataset to avoid repeat pulls
+    # data_for_api_58k = data_for_api_10k[
+    #     ~data_for_api_10k["group_id"].isin(api_10k["group_id"])
+    # ]
+
+    # Sample size * 4 calls, weighting likelihood of being sampled by group size
+    api = data.sample(
+        size * 4, weights="group_n", replace=True, random_state=RANDOM_STATE
+    )
+
+    # Split into 4 csvs
+    molly = api[0:size]
+    sarah = api[size : 2 * size]
+    sabrina = api[2 * size : 3 * size]
+    waleed = api[3 * size : 4 * size]
+
+    molly.to_csv(f"./data/molly_{size / 1000}k.csv", index=False)
+    sarah.to_csv(f"./data/sarah_{size / 1000}k.csv", index=False)
+    sabrina.to_csv(f"./data/sabrina_{size / 1000}k.csv", index=False)
+    waleed.to_csv(f"./data/waleed_{size / 1000}k.csv", index=False)
+
+    print(f"Succesfully created files of size {size}")
