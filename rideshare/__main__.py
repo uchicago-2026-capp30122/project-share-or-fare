@@ -10,9 +10,9 @@ from .join import join_api_csv
 
 #### 1. Set file names
 # Set the name for the transit data file, api response file, and the intended
-# output file name. 
+# output file name.
 # All files are CSV files in project-share-or-fare/data
-RIDESHARE_DATA="sabrina_500"
+RIDESHARE_DATA = "sabrina_500"
 API_DATA = "sabrina_500_api_response"
 OUTPUT_NAME = "sabrina_500_merged"
 
@@ -21,11 +21,10 @@ OUTPUT_NAME = "sabrina_500_merged"
 
 ###############################################################################
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--clean", action="store_true", help="Clean raw CSV"
-    )
+    parser.add_argument("--clean", action="store_true", help="Clean raw CSV")
     parser.add_argument(
         "--join", action="store_true", help="Join transit data into rideshare data"
     )
@@ -37,6 +36,7 @@ def main():
     if args.join:
         rideshare_transit_data = join_api_csv(RIDESHARE_DATA, API_DATA)
         rideshare_transit_data.to_csv(f"./data/{OUTPUT_NAME}.csv", index=False)
+
 
 if __name__ == "__main__":
     main()
