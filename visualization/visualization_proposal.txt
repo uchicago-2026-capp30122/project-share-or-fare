@@ -1,0 +1,80 @@
+Share or Fare — Interactive Visualization Proposal
+
+Goal:
+Build an interactive map/dashboard for Chicago that helps users compare rideshare trips (Uber/Lyft proxy) to feasible public transit alternatives, and explore how this varies by neighborhood, time of day, and user preference (time vs price vs distance).
+
+High-Level User Experience:
+1. A Chicago neighborhood map (outlined polygons with labels).
+2. Hover over a neighborhood to view summary metrics (rideshare volume, typical fare/time, transit access indicators).
+3. Click a START neighborhood and an END neighborhood (area polygon) to define an origin–destination (OD) trip.
+4. The dashboard displays a side-by-side comparison:
+   - Rideshare vs Transit travel time
+   - Distance
+   - Estimated price
+   - Optional: number of transfers (transit), and emissions estimate
+5. A “recommendation” panel suggests the most feasible option based on user-selected preferences and scenarios.
+
+
+Step-by-Step Visualization Design:
+
+A. Base Map Layer (Neighborhood Boundaries)
+1. Use a GeoJSON boundary file for Chicago areas (e.g., Community Areas or Census Tracts).
+2. Render a polygon map with:
+   - Clear outlines
+   - Neighborhood/area names
+   - Hover details
+3. Hover details (example):
+   - Area name
+   - Total rideshare trips/ volume
+   - Average Rideshare fare/time (by selected hour window)
+   - Transit access (optional): e.g., average distance to nearest CTA station/stop, or service frequency
+
+B. User Controls (Sidebar / Top Panel)
+1. Time scope controls:
+   - Hour of day (0–23) or time blocks (AM peak, Midday, PM peak, Late night)
+   - Optional: weekday/weekend option
+2. Scenario control (rideshare distribution-based):
+   - Best (travel time/price)
+   - Average (median)
+   - Worst (travel time/price)
+3. Preference control:
+   - Dropdown menu:
+     - “Fastest” (prioritize time)
+     - “Cheapest” (prioritize cost)
+     - “Shortest distance” (prioritize distance)
+     - “Balanced” (weights time/cost/distance equally)
+
+C. OD Selection (Start + End by Clicking Polygons)
+1. First click sets START area (highlight polygon).
+2. Second click sets END area (highlight polygon).
+3. Display selection summary:
+   - START area name
+   - END area name
+   - Selected hour/time block
+   - Selected scenario or preference preset
+4. Reset button clears selections.
+
+D. Recommendation Logic (Feasible Option Suggestion)
+1. Define “feasible transit” rules (simple + defensible):
+   - Transit available at that time AND
+   - Transit time ≤ (1.5 × rideshare time) AND
+   - Transfers ≤ 2 (optional)
+2. Compute a score for each mode:
+3. Recommend the lowest-score option with explanation:
+   - Example: “Transit is recommended because it is 35% cheaper and only 10 minutes longer.”
+
+
+Prototype Deliverable:
+1. Interactive map with hover option and clickable start/end selection.
+2. Scenario dropdown + preference preset dropdown.
+3. Recommendation output (feasibility + best option suggestion).
+
+Full Deliverable (End of Quarter)
+1. Scale up to full filtered dataset.
+2. Add richer exploration:
+   - Top OD routes (network view)
+   - Transit-gap-likely vs convenience-likely breakdown by neighborhood
+3. Optional: integrate census tract demographics to contextualize results
+
+
+End of Proposal

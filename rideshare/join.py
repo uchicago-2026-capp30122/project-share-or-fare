@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def join_api_csv(rideshare_data_name, api_response_name) -> pd.DataFrame:
     """
     Join the output csv from the api call back to the original csv dataset on group_id
@@ -8,7 +7,7 @@ def join_api_csv(rideshare_data_name, api_response_name) -> pd.DataFrame:
     Parameters:
         rideshare_data_name: A string, the name of the original rideshare data
         api_response_name: A string, the name of the api response file
-
+    
     Returns: A pandas dataframe with the merged rideshare and transit data
 
     Author: Sabrina
