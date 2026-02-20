@@ -13,7 +13,7 @@ import csv
 # This will be used for the input and output file names
 # file should be in root/data
 # Make sure to save this file before running
-NAME = "sarah"
+NAME = "waleed"
 SIZE = "10k"
 
 #### 3. Run <uv run python -m api> from project-share-or-fare directory
