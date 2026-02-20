@@ -12,10 +12,11 @@ import csv
 #### 2. Enter your name and dataset size
 # This will be used for the input and output file names
 # file should be in root/data
-NAME = "waleed"
-SIZE = "500"
+# Make sure to save this file before running
+NAME = "sarah"
+SIZE = "10k"
 
-#### 3. Run uv run python -m api from project-share-or-fare directory
+#### 3. Run <uv run python -m api> from project-share-or-fare directory
 
 ###############################################################################
 
