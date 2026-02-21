@@ -4,11 +4,6 @@ from .make_csv import clean, group_rides, format_for_api, sample_and_split
 
 ####### CHANGE THESE PARAMETERS ###############################################
 
-# Note: When we run join on our full dataset the relationship between transit
-#       data and rideshare data is one to many, but for this example we are
-#       using one to one data.
-#       For now, we can use the merged dataset to run exploratory data analysis
-
 #### 1. Set file names
 # MAKE CSV:
 # Set this to the full path to the raw data file
@@ -19,11 +14,14 @@ RAW_DATA_PATH = ""
 # output file name.
 # All files are CSV files in project-share-or-fare/data
 RIDESHARE_DATA = "sabrina_500"
-API_DATA = "sabrina_500_api_response"
-OUTPUT_NAME = "sabrina_500_merged"
+OUTPUT_NAME = "sabrina_many_merged_test"
 
-#### 2. Run `uv run python -m rideshare --join` from project-share-or-fare
-#       directory
+#### 2. Run the dataset
+# For the small-medium (500 and 10k rows) datasets, run:
+#   `uv run python -m rideshare --join` from project-share-or-fare directory
+#
+# For the large dataset (58k) run:
+#   `uv run python -m rideshare --join --l` from project-share-or-fare directory
 
 ###############################################################################
 
@@ -38,9 +36,12 @@ def main():
     parser.add_argument(
         "--join", action="store_true", help="Join transit data into rideshare data"
     )
+    parser.add_argument(
+        "--l", action="store_true", help="Join the large dataset"
+    )
     args = parser.parse_args()
 
-    if args.makecsv >= 0:
+    if args.makecsv and args.makecsv >= 0:
         size = args.makecsv
         data = clean(RAW_DATA_PATH)
         unique_rides = group_rides(data)
@@ -50,7 +51,7 @@ def main():
         sample_and_split(unique_rides_formatted, size)
 
     if args.join:
-        rideshare_transit_data = join_api_csv(RIDESHARE_DATA, API_DATA)
+        rideshare_transit_data = join_api_csv(RIDESHARE_DATA, large = args.l)
         rideshare_transit_data.to_csv(f"./data/{OUTPUT_NAME}.csv", index=False)
 
 
