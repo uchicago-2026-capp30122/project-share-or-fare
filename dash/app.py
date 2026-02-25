@@ -15,8 +15,7 @@ import dash_bootstrap_components as dbc
 ################################################################################
 
 # Initialize the app
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = Dash(external_stylesheets=external_stylesheets)
+app = Dash(external_stylesheets=[dbc.themes.LUX])
 
 # Incorporate data
 df = pd.read_csv('./data/small_medium_merged.csv')
@@ -28,26 +27,59 @@ df["Average Trip Seconds"] = df["Average Trip Seconds"] / 60
 p = """This is a project looking at rideshare data and the transit alternatives to rideshare rides. Our data is a random sample of all rideshare rides within the City of Chicago in the calendar year 2025. We will look at the distribution of rides in our dataset, the distribution of transit alternative, and try to discover why people choose to take rideshare instead of public transportation.
 """
 
-# App layout
-app.layout = [
+intro = [
+    html.Hr(),
+    html.Hr(),
     html.H1(children='Project Share or Fare'),
-    html.Div(children=p),
+    html.Div(children=p)
+]
+
+hist1 = [
+    html.Hr(),
     html.H3("Distribution of Rideshare Data"),
-    html.Div("Please select what metric you would like to see the distribution of:"),
-    dcc.Dropdown(
-        options={
-            'Average Trip Seconds': 'Rideshare Time',
-            'totalTime': 'Corresponding Transit Time',
-        },
-        value='Average Trip Seconds',
-        id='xaxis-column'
-    ),
-    dcc.Graph(figure={}, id='controls-and-graph'),
+    dbc.Col(children=[
+        dbc.Row([
+            dbc.Col(
+                dcc.Graph(figure={}, id='controls-and-graph'),
+                width={"size": 8}
+            ),
+            dbc.Col([
+                html.Hr(),
+                html.Div("Please select what metric you would like to see the distribution of:"),
+                dcc.Dropdown(
+                options={
+                    'Average Trip Seconds': 'Rideshare Time',
+                    'totalTime': 'Corresponding Transit Time',
+                },
+                value='Average Trip Seconds',
+                id='xaxis-column'
+                )
+            ])
+        ])
+    ])
+]
+
+data_table = [
     html.H3("Rideshare and Transit Dataset"),
     dag.AgGrid(
         rowData=df.to_dict('records'),
         columnDefs=[{"field": i} for i in df.columns]
     )
+]
+
+
+# App layout
+app.layout = [html.Div([
+    dbc.Row(dbc.Col(
+        children=[
+            dbc.Stack([
+            dbc.Row(intro),
+            dbc.Row(hist1),
+            dbc.Row(data_table)], 
+            gap = 3)],
+        width={"size": 10, "offset": 1},
+    )),  
+])
 ]
 
 # Add controls to build the interaction
@@ -68,7 +100,9 @@ def update_graph(row_chosen):
         }
     )
 
-    fig.update_layout(yaxis_title="Number of Rides") 
+    fig.update_layout(
+        yaxis_title="Number of Rides",
+        title_x=0.5) 
     return fig
 
 # Run the app
