@@ -7,14 +7,14 @@ from .make_csv import clean, group_rides, format_for_api, sample_and_split
 #### 1. Set file names
 # MAKE CSV:
 # Set this to the full path to the raw data file
-RAW_DATA_PATH = ""
+RAW_DATA_PATH = "~/Downloads/tnp.csv"
 
 # JOIN:
 # Set the name for the transit data file, api response file, and the intended
 # output file name.
 # All files are CSV files in project-share-or-fare/data
-RIDESHARE_DATA = "sabrina_500"
-OUTPUT_NAME = "sabrina_many_merged_test"
+RIDESHARE_DATA = "ride_groups"
+OUTPUT_NAME = "small_medium_merged"
 
 #### 2. Run the dataset
 # For the small-medium (500 and 10k rows) datasets, run:
