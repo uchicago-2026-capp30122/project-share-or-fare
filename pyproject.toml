@@ -16,4 +16,6 @@ dependencies = [
     "numpy>=2.4.1",
     "pandas>=3.0.0",
     "ruff>=0.15.1",
+    "dash-vega-components>=0.11.0",
+    "altair>=6.0.0",
 ]
