@@ -1,6 +1,9 @@
 # clean_route_data.py
-# This file loads in ride-group-level data with the api responses, merges it with
-# neighborhood boundaries and polyogn data
+# Takes in small_medium_merged_neighborhood.csv  data, and:
+#  - aggregates to the pickup/dropoff neighborhood level
+#  - adds pickup/dropoff neighborhood polygons
+#  - adds "connectivity measure" (transitTime/rideshareTime)
+#  - adds color based on connectivity measure and line opacity based on count
 
 import folium
 from folium import plugins
@@ -27,9 +30,12 @@ def standardize(x):
 
 
 def clean_route_data(route_data):
+    """
+    Cleans and renames time fields, aggregates by Pickup and Dropoff neighborhood
+    """
     # convert totalTime field to minutes 
     route_data["totalTime"] = route_data["totalTime"].apply(lambda s: int(str(s)[:-1]))/60
-    print("here")
+
     # convert ride share time to minutes
     route_data["Average Trip Minutes"] = route_data["Average Trip Seconds"]/60
 
@@ -38,10 +44,8 @@ def clean_route_data(route_data):
         "Average Trip Minutes": "rideshareTime"
     })
 
-
-    # Aggregate route data by day type and hour to get pickup, dropoff level data
-    # Take average of transit time, ride share time, and sum of trip count
-    route_data = route_data.groupby([PICKUP_LAT, PICKUP_LONG, DROPOFF_LAT, DROPOFF_LONG]).agg({
+    # Aggregate route by pickup and dropoff neighborhood
+    route_data = route_data.groupby(["Pickup Neighborhood", "Dropoff Neighborhood"]).agg({
     "totalTransitTime" : "mean",
     "rideshareTime" : "mean",
     "Count": "sum"
@@ -51,49 +55,31 @@ def clean_route_data(route_data):
 
 
 def join_neighborhood_data(route_data, neighborhood_boundaries):
-    # Initialize new columns
-    route_data["Pickup Neighborhood"] = ""
-    route_data["Pickup Neighborhood Polygon"] = ""
-    route_data["Dropoff Neighborhood"] = ""
-    route_data["Dropoff Neighborhood Polygon"] = ""
+    """
+    Merge in polygon data
+    """
 
-    ## Join ride group and neighborhood data
-    # Loop over route data rows
-    for i, ride_group in route_data.iterrows():
-        pickup_point = Point(ride_group[PICKUP_LONG], ride_group[PICKUP_LAT])
-        dropoff_point = Point(ride_group[DROPOFF_LONG], ride_group[DROPOFF_LAT])
+    # Pickup neighborhood
+    route_data = route_data.merge(neighborhood_boundaries[["the_geom", "PRI_NEIGH"]], 
+                     left_on = "Pickup Neighborhood",
+                     right_on = "PRI_NEIGH",
+                     how = "left")
+    route_data = route_data.rename(columns = {"the_geom": "Pickup Neighborhood Polygon"})
 
-        # Loop over neighborhood dataset
-        # If pickup_point or drop_off point in neighborhood polygon,
-        # add to route data frame
-        for _, neighborhood in neighborhood_boundaries.iterrows():
-            neighborhood_polygon = from_wkt(neighborhood["the_geom"])
-            if neighborhood_polygon.contains(pickup_point):
-                route_data.loc[i, "Pickup Neighborhood"] = neighborhood["PRI_NEIGH"]
-                route_data.loc[i, "Pickup Neighborhood Polygon"] = neighborhood["the_geom"]
-            if neighborhood_polygon.contains(dropoff_point):
-                route_data.loc[i, "Dropoff Neighborhood"] = neighborhood["PRI_NEIGH"]
-                route_data.loc[i, "Dropoff Neighborhood Polygon"] = neighborhood["the_geom"]
+    # Dropoff neighborhood
+    route_data = route_data.merge(neighborhood_boundaries[["the_geom", "PRI_NEIGH"]], 
+                     left_on = "Dropoff Neighborhood",
+                     right_on = "PRI_NEIGH",
+                     how = "left")
+    route_data = route_data.rename(columns = {"the_geom": "Dropoff Neighborhood Polygon"})
 
-    # Aggregate points by pickup and dropoff neighborhood
-    # Take average transit time and rideshare time, sum of count
-    agg_route_data = route_data.groupby(["Pickup Neighborhood", "Pickup Neighborhood Polygon",
-                    "Dropoff Neighborhood", "Dropoff Neighborhood Polygon"])[[
-                        "transitTime",
-                        "rideshareTime",
-                        "Count"
-                    ]].agg({
-                        "totalTransitTime" : "mean",
-                        "rideshareTime" : "mean",
-                        "Count": "sum"  
-                    }).reset_index()
-    
+
     # Filter out missing values *** To Do: look into why there are missing values
-    agg_route_data=agg_route_data[(agg_route_data["Dropoff Neighborhood Polygon"] != "") &
-               (agg_route_data["Pickup Neighborhood Polygon"] != "")]
+    route_data=route_data[(route_data["Dropoff Neighborhood Polygon"] != "") &
+               (route_data["Pickup Neighborhood Polygon"] != "")]
     
     
-    return agg_route_data
+    return route_data
 
 def aes_mapping(data):
     """
@@ -101,23 +87,24 @@ def aes_mapping(data):
     opacity, and color
     """
 
-    # Add tripDiffTime and color mapping
-    data["tripDiffTime"] = data["totalTransitTime"] - data["rideshareTime"]
+    # Add tripDiffRatio and color mapping
+    data["tripDiffRatio"] = data["totalTransitTime"]/data["rideshareTime"]
     bins = [0, 0.25, 0.50, 0.75, 1]
     labels = ["green", "yellow", "orange", "red"]
-    data["tripDiffTimeColor"] = pd.cut(data["tripDiffTime"].rank(pct=True), bins=bins, labels=labels)
+    data["tripDiffRatioColor"] = pd.cut(data["tripDiffRatio"].rank(pct=True), bins=bins, labels=labels)
 
     # Add line weight and opacity
-    data["line_weight"] = (standardize(data['Count']) + 0.1) * 5
     data["opacity"] = (standardize(data['Count']) + 0.1)    
+
+
 
     return data
 
 
 
 def main():
-    # Load in route data and clean
-    route_data = pd.read_csv("data/small_medium_merged.csv", sep=",").dropna()
+    # Load in route data, clean and aggregate
+    route_data = pd.read_csv("data/small_medium_merged_neighborhood.csv", sep=",").dropna()
     cleaned_route_data = clean_route_data(route_data)
     print("Route Data Cleaned")
 

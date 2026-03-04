@@ -1,4 +1,12 @@
 import pandas as pd
+from shapely.geometry import Point
+from shapely import from_wkt
+
+# Define column names for convenience
+PICKUP_LAT = "Pickup Centroid Latitude"
+PICKUP_LONG = "Pickup Centroid Longitude"
+DROPOFF_LAT = "Dropoff Centroid Latitude"
+DROPOFF_LONG = "Dropoff Centroid Longitude"
 
 def join_api_csv(rideshare_data_name, large = False) -> pd.DataFrame:
     """
@@ -50,3 +58,30 @@ def join_api_csv(rideshare_data_name, large = False) -> pd.DataFrame:
         how="inner"
     )
     return rideshare_transit_data
+
+
+def join_neighborhood_data(route_data, neighborhood_boundaries):
+    """
+    This function merges in "Pickup Neighborhood" and "Dropoff 
+    Neighborhood" columns.
+    """
+    # Initialize new columns
+    route_data["Pickup Neighborhood"] = ""
+    route_data["Dropoff Neighborhood"] = ""
+
+    # Loop over route data rows
+    for i, ride_group in route_data.iterrows():
+        pickup_point = Point(ride_group[PICKUP_LONG], ride_group[PICKUP_LAT])
+        dropoff_point = Point(ride_group[DROPOFF_LONG], ride_group[DROPOFF_LAT])
+
+        # Loop over neighborhood dataset
+        # If pickup_point or drop_off point in neighborhood polygon,
+        # add to route data frame
+        for _, neighborhood in neighborhood_boundaries.iterrows():
+            neighborhood_polygon = from_wkt(neighborhood["the_geom"])
+            if neighborhood_polygon.contains(pickup_point):
+                route_data.loc[i, "Pickup Neighborhood"] = neighborhood["PRI_NEIGH"]
+            if neighborhood_polygon.contains(dropoff_point):
+                route_data.loc[i, "Dropoff Neighborhood"] = neighborhood["PRI_NEIGH"]
+
+    return route_data
