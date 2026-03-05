@@ -1,6 +1,7 @@
 import argparse
-from .join import join_api_csv
+from .join import join_api_csv, join_neighborhood_data
 from .make_csv import clean, group_rides, format_for_api, sample_and_split
+import pandas as pd
 
 ####### CHANGE THESE PARAMETERS ###############################################
 
@@ -52,7 +53,13 @@ def main():
 
     if args.join:
         rideshare_transit_data = join_api_csv(RIDESHARE_DATA, large = args.l)
-        rideshare_transit_data.to_csv(f"./data/{OUTPUT_NAME}.csv", index=False)
+
+        # Add in pickup and dropoff neighborhood names
+        neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
+        rideshare_transit_data_w_neighborhoods = join_neighborhood_data(
+            rideshare_transit_data, 
+            neighborhood_boundaries)
+        rideshare_transit_data_w_neighborhoods.to_csv(f"./data/{OUTPUT_NAME}_neighborhood.csv", index=False)
 
 
 if __name__ == "__main__":
