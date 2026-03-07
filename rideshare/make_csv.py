@@ -7,11 +7,12 @@ from zoneinfo import ZoneInfo
 # Update random state before running
 SAMPLED = []
 RANDOM_STATE = 11
+TEAMMATES = ["molly", "sabrina", "sarah", "waleed"]
 
 
 def clean(filename: str) -> pd.DataFrame:
     """
-    Basic cleaning the raw data
+    Basic cleaning the raw. Takes around 15 minutes to run.
     Cleaning:
         - Only trips with all fields not NA
         - Only trips 100% in Chicago
@@ -25,7 +26,7 @@ def clean(filename: str) -> pd.DataFrame:
 
     Author: Molly
     """
-    df = pd.read_csv(filename)
+    df = pd.read_csv(filename, dtype={'Trip Miles': float})
 
     # Select relevant columns
     data = df[
@@ -106,9 +107,15 @@ def group_rides(data: pd.DataFrame) -> pd.DataFrame:
     """
     Grouping by Unique API Call
 
-    We have a limited number of API calls and want to use them efficiently. Rather than making repeated calls that return identical results, we will consolidate requests whenever possible.
+    We have a limited number of API calls and want to use them efficiently. 
+    Rather than making repeated calls that return identical results, we will 
+    consolidate requests whenever possible.
 
-    Under our working assumptions--including that CTA schedules remain constant over the sample period (and match current schedule), that we ignore traffic variation, and that all weekdays are treated as equivalent—we will make one API call per unique set of parameters and apply the returned transit information to all rideshare trips that share those parameters.
+    Under our working assumptions--including that CTA schedules remain constant 
+    over the sample period (and match current schedule), that we ignore traffic 
+    variation, and that all weekdays are treated as equivalent—we will make one 
+    API call per unique set of parameters and apply the returned transit 
+    information to all rideshare trips that share those parameters.
 
     Specifically, if multiple rideshare trips share the same:
         - Start and end coordinates (rounded to three decimal places)
@@ -117,11 +124,13 @@ def group_rides(data: pd.DataFrame) -> pd.DataFrame:
     then a single API call will suffice for all of them.
 
     To implement this, we will:
-    1. Create a dataframe that counts the number of trips in each group defined by the criteria above.
+    1. Create a dataframe that counts the number of trips in each group 
+    defined by the criteria above.
     2. Take a weighted random sample from this grouped dataframe.
     3. Pass that sample to the API program.
 
-    This approach allows us to maximize sample size from the rideshare dataset (which is population data) while minimizing API usage.
+    This approach allows us to maximize sample size from the rideshare dataset 
+    (which is population data) while minimizing API usage.
 
     Author: Molly
     """
@@ -169,7 +178,8 @@ def group_rides(data: pd.DataFrame) -> pd.DataFrame:
 
 def format_for_api(data: pd.DataFrame, unique_calls: pd.DataFrame) -> pd.DataFrame:
     """
-    Convert day types into specific representative dates, with separate year, month, and day columns with data as strings.
+    Convert day types into specific representative dates, with separate year, 
+    month, and day columns with data as strings.
 
     Parameters:
         data
@@ -210,15 +220,8 @@ def sample_and_split(data: pd.DataFrame, size: int):
         size * 4, weights="group_n", replace=True, random_state=RANDOM_STATE
     )
 
-    # Split into 4 csvs
-    molly = api[0:size]
-    sarah = api[size : 2 * size]
-    sabrina = api[2 * size : 3 * size]
-    waleed = api[3 * size : 4 * size]
-
-    molly.to_csv(f"./data/molly_{size / 1000}k.csv", index=False)
-    sarah.to_csv(f"./data/sarah_{size / 1000}k.csv", index=False)
-    sabrina.to_csv(f"./data/sabrina_{size / 1000}k.csv", index=False)
-    waleed.to_csv(f"./data/waleed_{size / 1000}k.csv", index=False)
+    for i, teammate in enumerate(TEAMMATES):
+        teammate = api[size * i : size * (i+1)]
+        teammate.to_csv(f"./data/{teammate}_{size / 1000}k.csv", index=False)
 
     print(f"Succesfully created files of size {size}")

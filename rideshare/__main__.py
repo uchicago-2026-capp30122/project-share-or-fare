@@ -6,7 +6,7 @@ import pandas as pd
 ########################## CHANGE THESE PARAMETERS #############################
 
 
-#### MAKE CSV: ####
+#### MAKE CSV OF SAMPLE DATA: ####
 # 1. Set file name
 # Set this to your full local path to the raw data file.
 # This is the file download from chicago data portal with all rideshare rides
@@ -27,10 +27,11 @@ RAW_DATA_PATH = "~/Downloads/tnp.csv"
 
 #### JOIN: ####
 # 1. Set file name
-# Set the name for the transit data file, api response file, and the intended
-# output file name.
+# Set the name for the api response file, neighborhood data file, and the 
+# intended output file name.
 # All files are CSV files in project-share-or-fare/data
 RIDESHARE_DATA = "ride_groups"
+NEIGHBORHOOD_DATA = "data/Neighborhoods_2012b_20260227.csv"
 OUTPUT_NAME = "small_medium_merged"
 
 # 2. Run the dataset
@@ -76,7 +77,7 @@ def main():
         rideshare_transit_data = join_api_csv(RIDESHARE_DATA, large = args.l)
 
         # Add in pickup and dropoff neighborhood names
-        neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
+        neighborhood_boundaries = pd.read_csv(NEIGHBORHOOD_DATA)
         rideshare_transit_data_w_neighborhoods = join_neighborhood_data(
             rideshare_transit_data, 
             neighborhood_boundaries)
