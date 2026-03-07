@@ -1,17 +1,51 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, render_template_string
 import folium
 from folium import GeoJson, GeoJsonTooltip, plugins
 import pandas as pd
 from shapely import from_wkt
 import json
 import html
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, Output, Input
+import numpy as np
 
 neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
 neighborhood_routes = pd.read_csv("data/neighborhood_route_data.csv")
 
+# To Do: handle neighborhoods with no rides (Greektown)
+
 server = Flask(__name__)
 app = Dash(__name__, server=server, url_base_pathname='/dashboard/')
+
+
+current_neighborhood = ""
+
+
+def standardize(x):
+    """
+    Standardizes value, used as weighting function for opacity
+    """
+    return (x-x.min())/(x.max()-x.min())
+
+
+def filter_neighborhood(neighborhood):
+    """
+    Helper function for filtering data to specific pickup neighborhood
+    """
+
+    # Don't want to include intra-neighborhood rides
+    filtered_neighborhood_routes = neighborhood_routes[
+        (neighborhood_routes['Pickup Neighborhood'] == neighborhood) &
+        (neighborhood_routes['Dropoff Neighborhood'] != neighborhood)
+        ].sort_values("Count", ascending=False)
+
+    # Add percentage of rides from pickup to each neighborhood
+    filtered_neighborhood_routes["perc_rides"] = round((
+        filtered_neighborhood_routes["Count"]/filtered_neighborhood_routes["Count"].sum())*100, 2)
+    
+    # Add opacity based on percentage of rides
+    filtered_neighborhood_routes["opacity"] = standardize(filtered_neighborhood_routes["perc_rides"])
+
+    return filtered_neighborhood_routes
 
 
 @server.route('/neighborhood', methods=['POST'])
@@ -19,23 +53,29 @@ def neighborhood():
     data = request.get_json()
     name = data.get('name')
     # Filter routes dataframe for this neighborhood
-    filtered_neighborhood_routes = neighborhood_routes[neighborhood_routes['Pickup Neighborhood'] == name]
+    filtered_neighborhood_routes = filter_neighborhood(name)
+
+    # Use only top 5 destinations
+    top5_destinations = filtered_neighborhood_routes.sort_values(
+        "Count", ascending=False).iloc[:5,:]
 
     # Build a GeoJSON FeatureCollection from the matching routes
     features = []
-    for _, row in filtered_neighborhood_routes.iterrows():
+    for _, row in top5_destinations.iterrows():
         pickup_poly = from_wkt(row["Pickup Neighborhood Polygon"])
         dropoff_poly = from_wkt(row["Dropoff Neighborhood Polygon"])
         features.append({
             "type": "Feature",
-            "properties": {"line_weight": 5,
-                           "opacity": row["opacity"],
+            "properties": {"line_weight": (row["opacity"]*5)+1,
+                           "opacity": 1,
                            "color": row["tripDiffRatioColor"],
                            "from": row["Pickup Neighborhood"],
                            "to": row["Dropoff Neighborhood"],
                            "transitTime": round(row["totalTransitTime"],2),
                            "rideshareTime": round(row["rideshareTime"],2),
-                           "n_rides": row["Count"]},
+                           "ratio": round(row["tripDiffRatio"],2),
+                           "n_rides": row["Count"],
+                           "perc_rides": row["perc_rides"]},
             "geometry": {
                 "type": "LineString",
                 "coordinates": [
@@ -54,13 +94,22 @@ def neighborhood():
     })
     
 
+@server.route('/set_neighborhood', methods=['POST'])
+def set_neighborhood():
+    global current_neighborhood
+    current_neighborhood = request.get_json().get('name')
+    return jsonify({"status": "ok"})
+
+
 @server.route('/')
 def index():
     m = folium.Map(
         location=(41.86721, -87.63231),
         zoom_control=False,
         tiles="Cartodb Positron",
-        zoom_start=11
+        zoom_start=11, 
+        # width = "60%",
+        # height = "100%"
     )
 
     # Build a single GeoJSON FeatureCollection from all neighborhoods
@@ -75,7 +124,7 @@ def index():
 
     geojson_data = {"type": "FeatureCollection", "features": features}
 
-    # JS function that runs for each feature — sends clicked name to Flask
+    # This is what shows the neighborhood name when hovering
     on_each_feature = """
         function test(feature, layer) {
             layer.on('click', function(e) {
@@ -144,7 +193,7 @@ def index():
         return {
             color: feature.properties.color, 
             weight: feature.properties.line_weight,
-            opacity: feature.properties.opacity*5
+            opacity: feature.properties.opacity
             };
         } 
     setTimeout(function() {
@@ -163,6 +212,12 @@ def index():
                     sublayer.on('click', function(e) {
                         const name = sublayer.feature.properties.name;
                         console.log("Clicked:", name);
+
+                        fetch('/set_neighborhood', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ name: name })
+                        });
 
                         fetch('/neighborhood', {
                             method: 'POST',
@@ -184,7 +239,9 @@ def index():
                                         <b>From ${props['from']} to ${props['to']}</b><br>
                                         <b>Transit Time:</b> ${props['transitTime']} min. <br>
                                         <b>Ride Share Time:</b> ${props['rideshareTime']} min. <br>
-                                        <b>Num. Rides:</b> ${props['n_rides']}
+                                        <b>% Neighborhood Rides:</b> ${props['perc_rides']}%<br>
+                                        <b>Transit/Rideshare Time Ratio: </b> ${props['ratio']}
+
                                     `;
 
                                     layer.bindTooltip(tooltipContent, {
@@ -218,36 +275,118 @@ def index():
     </script>
     """
 
+
     m.get_root().html.add_child(folium.Element(css))
     m.get_root().html.add_child(folium.Element(click_handler_script))
     m.get_root().html.add_child(folium.Element(js_code))
+    # m.get_root().html.add_child(folium.Element(css_map_fill))
 
-    # return m.get_root().render()
-    return m._repr_html_()
+    html_str = m._repr_html_()
 
+    return html_str
+
+
+@app.callback(
+    Output("panel-title", "children"),
+    Output("panel-content", "children"),
+    Input("poll-interval", "n_intervals")
+)
+def update_panel(n):
+    global current_neighborhood
+
+    if not current_neighborhood:
+        return "Click a neighborhood", "No neighborhood selected"
+
+    # Get filtered neighborhood dataframe
+    filtered_neighborhood_routes = filter_neighborhood(current_neighborhood)
+
+    # Add in some neighborhood stats, weighted by count
+    avg_tripDiffRatio = str(round(
+        np.average(filtered_neighborhood_routes["tripDiffRatio"], 
+           weights=filtered_neighborhood_routes["Count"]),
+        2))
+    
+    avg_tripCost = str(round(
+        np.average(filtered_neighborhood_routes["Average Trip Total"], 
+           weights=filtered_neighborhood_routes["Count"]),
+          2)).ljust(5, '0')
+    
+    # Find least connected routes
+    least_connected_routes = filtered_neighborhood_routes.sort_values("tripDiffRatio", ascending=False).head(5)
+    least_connected = []
+    for i in range(5):
+        ngb = least_connected_routes[["Dropoff Neighborhood"]].values[i][0]
+        perc = least_connected_routes[["perc_rides"]].values[i][0]
+        ratio = round(least_connected_routes[["tripDiffRatio"]].values[i][0],2)
+        str_item = f"{i+1}. {ngb} ({perc}%, {ratio})"
+        least_connected.append(str_item)
+    
+    least_connected_repr = "\n".join(least_connected)
+
+    # get just top 5 destinations
+    top5_destinations = filtered_neighborhood_routes.sort_values(
+        "Count", ascending=False).iloc[:5,:]
+    
+    top5 = []
+    for i in range(5):
+        ngb = top5_destinations[["Dropoff Neighborhood"]].values[i][0]
+        perc = top5_destinations[["perc_rides"]].values[i][0]
+        ratio = round(top5_destinations[["tripDiffRatio"]].values[i][0],2)
+        str_item = f"""{i+1}. {ngb} ({perc}%, {ratio}) """
+        top5.append(str_item)
+
+    top5_repr = "\n".join(top5)
+
+
+    return f"{current_neighborhood}", dcc.Markdown(f"""
+**Top 5 destinations:** \n
+{top5_repr}
+
+**Least Connected Routes:** \n
+{least_connected_repr}
+
+**Average Transit/Ride Share Time Ratio:** \n {avg_tripDiffRatio} \n
+
+**Average Trip Cost:** \n ${avg_tripCost}
+""")
 
 app.layout = html.Div([
-    html.H1("Share or Fare", style={"textAlign": "center"}),
 
+    # Map on top
     html.Div([
-        html.H2("2025 Ride Share Analysis"),
         html.Iframe(
             id="folium-map",
             srcDoc=index(),
             width="100%",
-            height="500px",
-            style={"border": "none"}
+            height="100%",
+            style={"border": "none", "display": "block"}
         )
     ], style={
-        "border": "2px solid #ccc",
-        "borderRadius": "8px",
-        "padding": "10px",
-        "margin": "20px",
-        "boxShadow": "2px 2px 8px rgba(0,0,0,0.1)"
+        "overflow": "hidden",
+        "flex": "8",           
     }),
-])
 
+    # Data panel on the right
+    html.Div([
+    html.H3(id="panel-title", children="Click a neighborhood"),
+    html.Div(id="panel-content", children="No neighborhood selected", 
+             style={"color": "grey"}),
+    dcc.Interval(id="poll-interval", interval=500, n_intervals=0)
+    ], style={
+    "border": "2px solid #ccc",
+    "borderRadius": "8px",
+    "padding": "15px",
+    "flex": "2",
+    "overflowY": "auto",
+    "boxShadow": "2px 2px 8px rgba(0,0,0,0.1)",
+    })
 
+    ], style={
+    "display": "flex",
+    "flexDirection": "row",   
+    "height": "100vh",
+    "overflow": "hidden"
+    })
 
 
 if __name__ == '__main__':

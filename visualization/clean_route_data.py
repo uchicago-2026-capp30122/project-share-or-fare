@@ -48,7 +48,8 @@ def clean_route_data(route_data):
     route_data = route_data.groupby(["Pickup Neighborhood", "Dropoff Neighborhood"]).agg({
     "totalTransitTime" : "mean",
     "rideshareTime" : "mean",
-    "Count": "sum"
+    "Count": "sum",
+    "Average Trip Total": "mean"
     }).reset_index()
     
     return route_data
@@ -93,10 +94,8 @@ def aes_mapping(data):
     labels = ["green", "yellow", "orange", "red"]
     data["tripDiffRatioColor"] = pd.cut(data["tripDiffRatio"].rank(pct=True), bins=bins, labels=labels)
 
-    # Add line weight and opacity
-    data["opacity"] = (standardize(data['Count']) + 0.1)    
-
-
+    # Add  and opacity
+    # data["opacity"] = (standardize(data['Count']) + 0.1)    
 
     return data
 
