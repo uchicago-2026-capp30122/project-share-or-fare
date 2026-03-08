@@ -7,6 +7,20 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 import altair as alt
 import dash_vega_components as dvc
+from visualization.transform_data import clean_and_transform
+from visualization.altair_charts import(
+    chart1,
+    chart2,
+    chart3,
+    price_chart,
+    chart5,
+    distribution_of_rides,
+    distribution_of_ratio,
+    transit_rideshare_comparison,
+    rides_by_month,
+    ratio_by_month
+)
+
 
 ################################################################################
 #
@@ -21,27 +35,16 @@ import dash_vega_components as dvc
 app = Dash(external_stylesheets=[dbc.themes.LUX])
 
 # Data Processing
-df = pd.read_csv('./data/small_medium_merged.csv')[:3000]
-
-# Drop all NAs
-df = df.replace("NaN", np.nan)
-df = df.dropna()
-
-df["totalTime"] = df["totalTime"].str[:-1]
-df["totalTime"] = df["totalTime"].astype('Int64')
-df["totalTimeMin"] = df["totalTime"] / 60
-df["Average Trip Minutes"] = df["Average Trip Seconds"] / 60
-
-df["Number of Modes"] = df["modes"].str.split(",").apply(len)
-
-df["Transit Percentage Longer"] = ((df["totalTimeMin"] - df["Average Trip Minutes"]) / df["Average Trip Minutes"]).round(1)
-df["Transit Rideshare Ratio"] = (df["totalTimeMin"] / df["Average Trip Minutes"]).round(1)
+df = pd.read_csv('./data/small_medium_merged.csv')
+df = clean_and_transform(df)
 
 p = """This is a project looking at rideshare data and the transit alternatives to rideshare rides. Our data is a random sample of all rideshare rides within the City of Chicago in the calendar year 2025. We will look at the distribution of rides in our dataset, the distribution of transit alternative, and try to discover why people choose to take rideshare instead of public transportation.
 """
 dropdown_options={
     'Average Trip Minutes': 'Rideshare Time',
     'totalTimeMin': 'Corresponding Transit Time',
+    "Log Rideshare Min": "Log Rideshare Min",
+    "Log Transit Min": "Log Transit Min"
 }
 
 # Page components
@@ -79,73 +82,54 @@ hist1 = [
 ]
 
 
-# Ride by transit alternative
+# Visualizations
 alt.data_transformers.disable_max_rows()
-ratio_1_line = pd.DataFrame(
-    {'Average Trip Minutes': [0, 100], 'totalTimeMin': [0, 100]}
+
+ride_by_transit = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=transit_rideshare_comparison(df).to_dict(),
 )
 
-chart3 = (
-    alt.Chart(df)
-    .mark_circle(size=60)
-    .encode(
-        alt.X("Average Trip Minutes:Q")
-            .title("Trip Time via Rideshare (Minutes)")
-            .scale(domain=[0, 100]),
-        alt.Y("totalTimeMin:Q")
-            .title("Trip Time via Public Transportation (Minutes)")
-            .scale(domain=[0, 100])
-    )
-    .interactive() +
-    alt.Chart(ratio_1_line)
-    .mark_line(color='lightgray', thickness=0.2)
-    .encode(
-        x='Average Trip Minutes', y='totalTimeMin'
-    )
+distribution_of_ratio_chart = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=distribution_of_ratio(df).to_dict(),
 )
-ride_by_transit = dvc.Vega(
+
+rides_by_month_chart = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=rides_by_month(df).to_dict(),
+)
+
+ratio_by_month_chart = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=ratio_by_month(df).to_dict(),
+)
+
+# Waleed Charts
+top_neighborhoods = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=chart1.to_dict(),
+)
+
+distance_ride_neighborhood = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=chart2.to_dict(),
+)
+
+conectivity_pairs = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=chart3.to_dict(),
 )
 
-# number of transit modes
-chart4 = (
-    alt.Chart(df)
-    .mark_bar()
-    .encode(
-        alt.X("sum(Count):Q").title("Number of Rides"),
-        alt.Y("Number of Modes:O")
-    )
-)
-bar_modes = dvc.Vega(
+price_corridor_chart = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=chart4.to_dict(),
+    spec=price_chart.to_dict(),
 )
 
-# Transit percentage longer
-vline_data = pd.DataFrame({'x': [50]})
-vline = alt.Chart(vline_data).mark_rule(color='red', strokeWidth=3).encode(x='x:Q')
-
-chart5 = (
-    alt.Chart(df)
-    .mark_bar()
-    .encode(
-        alt.X(
-            "Transit Rideshare Ratio:O", 
-            title="Difference in Transit and Ridehsare Time as Percentage of Rideshare time"),
-        alt.Y("sum(Count):Q", title="Number of Rides"),
-    )
-    .interactive() 
-    + 
-    alt.Chart(pd.DataFrame({'Transit Rideshare Ratio': [1]}))
-    .mark_rule(color='red')
-    .encode(x='Transit Rideshare Ratio:O')
-)
-hist_time_ratio = dvc.Vega(
+connectivity_trips = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=chart5.to_dict(),
 )
-
 
 
 # Display all other visualizations
@@ -159,18 +143,38 @@ other_viz = [
     ]),
     html.Hr(),
     dbc.Row([
-        html.H5("Number of modes for transit alternative"),
-        html.Div([bar_modes]),
+        html.H5("Distribution of Ratio of Transit to Rideshare Time"),
+        html.Div([distribution_of_ratio_chart]),
     ]),
     html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
+    dbc.Row([
+        html.H5("Average Rides per Day by Month"),
+        html.Div([rides_by_month_chart]),
+    ]),
     html.Hr(),
     dbc.Row([
-        html.H5("Distribution of Transit Alternative to Rides as Ratios"),
-        html.Div([hist_time_ratio]),
+        html.H5("Change in Transportation Time to Rideshare Time Ratio Over Time Compared to Temperature"),
+        html.Div([ratio_by_month_chart]),
+    ]),
+    html.Hr(),
+    dbc.Row([
+        html.Div([top_neighborhoods]),
+    ]),
+    html.Hr(),
+    dbc.Row([
+        html.Div([distance_ride_neighborhood]),
+    ]),
+    html.Hr(),
+    dbc.Row([
+        html.Div([conectivity_pairs]),
+    ]),
+    html.Hr(),
+    dbc.Row([
+        html.Div([price_corridor_chart]),
+    ]),
+    html.Hr(),
+    dbc.Row([
+        html.Div([connectivity_trips]),
     ]),
 ]
 
@@ -197,15 +201,16 @@ app.layout = [html.Div([
     Input(component_id='xaxis-column', component_property='value')
 )
 def update_graph(row_chosen):
-    chart = (
-        alt.Chart(df)
-        .mark_bar()
-        .encode(
-            alt.X(f"{row_chosen}:Q", title=dropdown_options[row_chosen]),
-            alt.Y("sum(Count):Q", title="Number of Rides"),
-        )
-        .interactive()
-    )
+    chart = distribution_of_rides(df, row_chosen, dropdown_options)
+    # chart = (
+    #     alt.Chart(df)
+    #     .mark_bar()
+    #     .encode(
+    #         alt.X(f"{row_chosen}:Q", title=dropdown_options[row_chosen]),
+    #         alt.Y("sum(Count):Q", title="Number of Rides"),
+    #     )
+    #     .interactive()
+    # )
 
     return chart.to_dict()
 
