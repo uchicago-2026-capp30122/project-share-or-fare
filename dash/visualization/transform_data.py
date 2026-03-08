@@ -1,6 +1,4 @@
 """
-Author: Sabrina
-
 Description:
     This file contains the functions to load our combined dataset and
     apply any transformations needed for visualizations
@@ -14,6 +12,9 @@ import math
 
 
 def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Author: Sabrina
+    """
     df = df.replace("NaN", np.nan)
     df = df.dropna()
 
@@ -52,6 +53,8 @@ def dataset_sample(df: pd.DataFrame, fraction: int) -> pd.DataFrame:
         fraction: inverse of sample size
 
     Returns: A smaller semi-random sample of the dataframe
+
+    Author: Sabrina
     """
     random_number = random.randint(0, fraction - 1)
 
@@ -59,3 +62,16 @@ def dataset_sample(df: pd.DataFrame, fraction: int) -> pd.DataFrame:
     df = df[df["Average Trip Seconds"] % fraction == random_number]
 
     return df
+
+
+def get_text(filepath: str) -> str:
+    """
+    
+    Author: Sabrina
+    """
+    try:
+        with open(filepath, 'r') as file:
+            return file.read()
+    except FileNotFoundError:
+        print("BAD FILE PATH")
+        return ""
