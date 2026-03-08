@@ -84,7 +84,7 @@ alt.data_transformers.disable_max_rows()
 ratio_1_line = pd.DataFrame(
     {'Average Trip Minutes': [0, 100], 'totalTimeMin': [0, 100]}
 )
-ratio_title = "Trip Time of Public Transportation Alternative to Rideshare"
+
 chart3 = (
     alt.Chart(df)
     .mark_circle(size=60)
