@@ -11,7 +11,6 @@ import numpy as np
 neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
 neighborhood_routes = pd.read_csv("data/neighborhood_route_data.csv")
 
-# To Do: handle neighborhoods with no rides (Greektown)
 
 server = Flask(__name__)
 app = Dash(__name__, server=server, url_base_pathname='/dashboard/')
@@ -108,8 +107,7 @@ def index():
         zoom_control=False,
         tiles="Cartodb Positron",
         zoom_start=11, 
-        # width = "60%",
-        # height = "100%"
+        
     )
 
     # Build a single GeoJSON FeatureCollection from all neighborhoods
@@ -237,8 +235,8 @@ def index():
 
                                     const tooltipContent = `
                                         <b>From ${props['from']} to ${props['to']}</b><br>
-                                        <b>Transit Time:</b> ${props['transitTime']} min. <br>
-                                        <b>Ride Share Time:</b> ${props['rideshareTime']} min. <br>
+                                        <b>Avg. Transit Time:</b> ${props['transitTime']} min. <br>
+                                        <b>Avg. Ride Share Time:</b> ${props['rideshareTime']} min. <br>
                                         <b>% Neighborhood Rides:</b> ${props['perc_rides']}%<br>
                                         <b>Transit/Rideshare Time Ratio: </b> ${props['ratio']}
 
@@ -300,6 +298,9 @@ def update_panel(n):
     # Get filtered neighborhood dataframe
     filtered_neighborhood_routes = filter_neighborhood(current_neighborhood)
 
+    if len(filtered_neighborhood_routes) == 0:
+        return f"{current_neighborhood}", "No Data"
+
     # Add in some neighborhood stats, weighted by count
     avg_tripDiffRatio = str(round(
         np.average(filtered_neighborhood_routes["tripDiffRatio"], 
@@ -311,17 +312,7 @@ def update_panel(n):
            weights=filtered_neighborhood_routes["Count"]),
           2)).ljust(5, '0')
     
-    # Find least connected routes
-    least_connected_routes = filtered_neighborhood_routes.sort_values("tripDiffRatio", ascending=False).head(5)
-    least_connected = []
-    for i in range(5):
-        ngb = least_connected_routes[["Dropoff Neighborhood"]].values[i][0]
-        perc = least_connected_routes[["perc_rides"]].values[i][0]
-        ratio = round(least_connected_routes[["tripDiffRatio"]].values[i][0],2)
-        str_item = f"{i+1}. {ngb} ({perc}%, {ratio})"
-        least_connected.append(str_item)
     
-    least_connected_repr = "\n".join(least_connected)
 
     # get just top 5 destinations
     top5_destinations = filtered_neighborhood_routes.sort_values(
@@ -332,7 +323,7 @@ def update_panel(n):
         ngb = top5_destinations[["Dropoff Neighborhood"]].values[i][0]
         perc = top5_destinations[["perc_rides"]].values[i][0]
         ratio = round(top5_destinations[["tripDiffRatio"]].values[i][0],2)
-        str_item = f"""{i+1}. {ngb} ({perc}%, {ratio}) """
+        str_item = f"""{i+1}. {ngb} ({perc}% of rides) """
         top5.append(str_item)
 
     top5_repr = "\n".join(top5)
@@ -342,52 +333,138 @@ def update_panel(n):
 **Top 5 destinations:** \n
 {top5_repr}
 
-**Least Connected Routes:** \n
-{least_connected_repr}
-
-**Average Transit/Ride Share Time Ratio:** \n {avg_tripDiffRatio} \n
+**Transit Penalty Score:** \n {avg_tripDiffRatio} \n
 
 **Average Trip Cost:** \n ${avg_tripCost}
 """)
 
+
 app.layout = html.Div([
 
-    # Map on top
+    # Left column - header + map
     html.Div([
-        html.Iframe(
-            id="folium-map",
-            srcDoc=index(),
-            width="100%",
-            height="100%",
-            style={"border": "none", "display": "block"}
-        )
+
+        # Header
+        html.Div([
+            html.H1("Share or Fare? A comparison of ride share usage and transit routes in Chicago", style={"margin": "0", "color": "white", "fontSize": "24px"}),
+            html.P("Molly Long, Sabrina Wang, Sarah Zebar, Waleed Shahzad", style={"margin": "0", "color": "white", "fontSize": "16px"}),
+            html.P("CAPP 30122 Winter 2026", style={"margin": "0", "color": "white", "fontSize": "16px"}),
+        ], style={
+            "backgroundColor": "#3c83ca",
+            "padding": "10px 20px",
+            "borderBottom": "1px solid #ccc",
+            "marginRight": "8px"
+        }),
+
+        # Map
+        html.Div([
+            html.Iframe(
+                id="folium-map",
+                srcDoc=index(),
+                width="100%",
+                height="100%",
+                style={"border": "none", "display": "block"}
+            )
+        ], style={
+            "overflow": "hidden",
+            "flex": "1"             # ← takes remaining height after header
+        }),
+
+        # Footer
+        html.P("Sources: Chicago Data Portal (2025) and Google Routes API", style = {"color": "black"})
+
     ], style={
-        "overflow": "hidden",
-        "flex": "8",           
+        "display": "flex",
+        "flexDirection": "column",  # ← stack header and map vertically
+        "flex": "8",                # ← takes up 80% of page width
     }),
 
-    # Data panel on the right
+    # Right column containing two panels
     html.Div([
-    html.H3(id="panel-title", children="Click a neighborhood"),
-    html.Div(id="panel-content", children="No neighborhood selected", 
-             style={"color": "grey"}),
-    dcc.Interval(id="poll-interval", interval=500, n_intervals=0)
-    ], style={
-    "border": "2px solid #ccc",
-    "borderRadius": "8px",
-    "padding": "15px",
-    "flex": "2",
-    "overflowY": "auto",
-    "boxShadow": "2px 2px 8px rgba(0,0,0,0.1)",
-    })
+
+        # Top right panel - dynamic
+        html.Div([
+            html.H3(id="panel-title", children="Click a neighborhood"),
+            html.Div(id="panel-content", children="No neighborhood selected"),
+        ], style={
+            "border": "2px solid #ccc",
+            "borderRadius": "8px",
+            "padding": "15px",
+            "flex": "1",
+            "overflowY": "auto",
+            "boxShadow": "2px 2px 8px rgba(0,0,0,0.1)",
+            "marginBottom": "10px"
+        }),
+
+        # Bottom right panel - static
+        html.Div([
+            html.H3("Legend"),
+            html.Div([
+                html.Div(None, style={
+                        "display":"inline-block",
+                        "width": "10px",
+                        "height": "10px",
+                        "backgroundColor": "green",
+                        "border": "solid 1px black"
+                    }),
+                    html.Span(" Transit Penalty Score 0.7 - 2")]),
+            html.Div([
+                html.Div(None, style={
+                        "display":"inline-block",
+                        "width": "10px",
+                        "height": "10px",
+                        "backgroundColor": "yellow",
+                        "border": "solid 1px black"
+                    }),
+                    html.Span(" Transit Penalty Score 2 - 2.3")]),
+            html.Div([
+                html.Div(None, style={
+                        "display":"inline-block",
+                        "width": "10px",
+                        "height": "10px",
+                        "backgroundColor": "orange",
+                        "border": "solid 1px black"
+                    }),
+                    html.Span(" Transit Penalty Score 2.3 - 2.7")]),
+            html.Div([
+                html.Div(None, style={
+                        "display":"inline-block",
+                        "width": "10px",
+                        "height": "10px",
+                        "backgroundColor": "red",
+                        "border": "solid 1px black"
+                    }),
+                    html.Span(" Transit Penalty Score 2.7+")]),
+            html.P(dcc.Markdown("""**Transit Penalty Score** is the average ratio of transit time to
+                        ride share time across all routes originating from a given neighborhood. For example,
+                        a score of 2 means that, on average, the comparable transit route is twice as long as
+                        the ride share trip. Buckets (colors) are computed based on quartiles. """)),
+        ], style={
+            "border": "2px solid #ccc",
+            "borderRadius": "8px",
+            "padding": "15px",
+            "flex": "1",
+            "overflowY": "auto",
+            "boxShadow": "2px 2px 8px rgba(0,0,0,0.1)",
+        }),
+
+        dcc.Interval(id="poll-interval", interval=500, n_intervals=0)
 
     ], style={
-    "display": "flex",
-    "flexDirection": "row",   
-    "height": "100vh",
-    "overflow": "hidden"
+        "display": "flex",
+        "flexDirection": "column",
+        "flex": "2",
+        "gap": "10px"
     })
+
+], style={
+    "display": "flex",
+    "flexDirection": "row",     # ← left column and right column side by side
+    "height": "calc(100vh - 16px)",
+    "overflow": "hidden",
+    "overscrollBehavior": "none"
+})
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

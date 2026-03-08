@@ -2,8 +2,8 @@
 # Takes in small_medium_merged_neighborhood.csv  data, and:
 #  - aggregates to the pickup/dropoff neighborhood level
 #  - adds pickup/dropoff neighborhood polygons
-#  - adds "connectivity measure" (transitTime/rideshareTime)
-#  - adds color based on connectivity measure and line opacity based on count
+#  - adds "transit penalty score" (transitTime/rideshareTime)
+#  - adds color based on transit penalty score
 
 import folium
 from folium import plugins
@@ -94,8 +94,6 @@ def aes_mapping(data):
     labels = ["green", "yellow", "orange", "red"]
     data["tripDiffRatioColor"] = pd.cut(data["tripDiffRatio"].rank(pct=True), bins=bins, labels=labels)
 
-    # Add  and opacity
-    # data["opacity"] = (standardize(data['Count']) + 0.1)    
 
     return data
 
