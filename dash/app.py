@@ -21,7 +21,7 @@ import dash_vega_components as dvc
 app = Dash(external_stylesheets=[dbc.themes.LUX])
 
 # Data Processing
-df = pd.read_csv('./data/small_medium_merged.csv')
+df = pd.read_csv('./data/small_medium_merged.csv')[:3000]
 
 # Drop all NAs
 df = df.replace("NaN", np.nan)
@@ -33,6 +33,9 @@ df["totalTimeMin"] = df["totalTime"] / 60
 df["Average Trip Minutes"] = df["Average Trip Seconds"] / 60
 
 df["Number of Modes"] = df["modes"].str.split(",").apply(len)
+
+df["Transit Percentage Longer"] = ((df["totalTimeMin"] - df["Average Trip Minutes"]) / df["Average Trip Minutes"]).round(1)
+df["Transit Rideshare Ratio"] = (df["totalTimeMin"] / df["Average Trip Minutes"]).round(1)
 
 p = """This is a project looking at rideshare data and the transit alternatives to rideshare rides. Our data is a random sample of all rideshare rides within the City of Chicago in the calendar year 2025. We will look at the distribution of rides in our dataset, the distribution of transit alternative, and try to discover why people choose to take rideshare instead of public transportation.
 """
@@ -75,48 +78,30 @@ hist1 = [
     ])
 ]
 
-# Minutes time
-alt.data_transformers.disable_max_rows()
-chart1 = (
-    alt.Chart(df)
-    .mark_circle(size=60)
-    .encode(
-        x="Average Trip Minutes",
-        y="Average Trip Total",
-    )
-    .interactive()
-)
-scatter_time = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=chart1.to_dict(),
-)
-
-# Price by Distance
-chart2 = (
-    alt.Chart(df)
-    .mark_circle(size=60)
-    .encode(
-        x="Float Trip Miles",
-        y="Average Trip Total",
-    )
-    .interactive()
-)
-scatter_dist = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=chart2.to_dict(),
-)
-
 
 # Ride by transit alternative
 alt.data_transformers.disable_max_rows()
+ratio_1_line = pd.DataFrame(
+    {'Average Trip Minutes': [0, 100], 'totalTimeMin': [0, 100]}
+)
+ratio_title = "Trip Time of Public Transportation Alternative to Rideshare"
 chart3 = (
     alt.Chart(df)
     .mark_circle(size=60)
     .encode(
-        x="Average Trip Minutes",
-        y="totalTimeMin",
+        alt.X("Average Trip Minutes:Q")
+            .title("Trip Time via Rideshare (Minutes)")
+            .scale(domain=[0, 100]),
+        alt.Y("totalTimeMin:Q")
+            .title("Trip Time via Public Transportation (Minutes)")
+            .scale(domain=[0, 100])
     )
-    .interactive()
+    .interactive() +
+    alt.Chart(ratio_1_line)
+    .mark_line(color='lightgray', thickness=0.2)
+    .encode(
+        x='Average Trip Minutes', y='totalTimeMin'
+    )
 )
 ride_by_transit = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
@@ -137,29 +122,55 @@ bar_modes = dvc.Vega(
     spec=chart4.to_dict(),
 )
 
+# Transit percentage longer
+vline_data = pd.DataFrame({'x': [50]})
+vline = alt.Chart(vline_data).mark_rule(color='red', strokeWidth=3).encode(x='x:Q')
+
+chart5 = (
+    alt.Chart(df)
+    .mark_bar()
+    .encode(
+        alt.X(
+            "Transit Rideshare Ratio:O", 
+            title="Difference in Transit and Ridehsare Time as Percentage of Rideshare time"),
+        alt.Y("sum(Count):Q", title="Number of Rides"),
+    )
+    .interactive() 
+    + 
+    alt.Chart(pd.DataFrame({'Transit Rideshare Ratio': [1]}))
+    .mark_rule(color='red')
+    .encode(x='Transit Rideshare Ratio:O')
+)
+hist_time_ratio = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=chart5.to_dict(),
+)
+
+
+
 # Display all other visualizations
 other_viz = [
     html.Hr(),
     html.H3("Other Exploratory Visualizations"),
     html.Hr(),
     dbc.Row([
-        html.H5("Trip Price by Length of Ride in Minutes"),
-        html.Div([scatter_time]),
-    ]),
-    html.Hr(),
-    dbc.Row([
-        html.H5("Trip Price by Distance of Ride"),
-        html.Div([scatter_dist]),
-    ]),
-    html.Hr(),
-    dbc.Row([
-        html.H5("Transit Alternative Time by Rideshare Time"),
+        html.H5("Comparison of Public Tranportation and Rideshare Trip times"),
         html.Div([ride_by_transit]),
     ]),
     html.Hr(),
     dbc.Row([
         html.H5("Number of modes for transit alternative"),
         html.Div([bar_modes]),
+    ]),
+    html.Hr(),
+    html.Hr(),
+    html.Hr(),
+    html.Hr(),
+    html.Hr(),
+    html.Hr(),
+    dbc.Row([
+        html.H5("Distribution of Transit Alternative to Rides as Ratios"),
+        html.Div([hist_time_ratio]),
     ]),
 ]
 
