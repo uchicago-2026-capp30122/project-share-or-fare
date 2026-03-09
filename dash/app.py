@@ -612,6 +612,7 @@ corridor_lowest_price_analysis = dvc.Vega(
 rides_by_month_chart = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=rides_by_month(df).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 # Page components
@@ -743,7 +744,10 @@ seasonality = [
     html.Div([s_blurb]),
     html.Hr(),
     dbc.Row([
-        html.H5("Average Rides per Day by Month"),
+        html.H5(
+            "Average Rides per Day by Month",
+            style={'textAlign': 'center'}
+        ),
         html.Div([rides_by_month_chart]),
     ]),
     html.Hr(),
