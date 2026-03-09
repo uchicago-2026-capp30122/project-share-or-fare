@@ -614,12 +614,26 @@ rides_by_month_chart = dvc.Vega(
     style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
+
 # Page components
 intro = [
     html.Hr(),
     html.Hr(),
     html.Hr(),
-    html.H1(children='Project Share or Fare', style={'fontSize': '48px'}),
+    html.H1(children='Share or Fare?', style={'fontSize': '48px'}),
+    html.Div(
+        children='A Comparison of Ride Share Usage and Transit Routes in Chicago',
+        style={'fontSize': '32px'}),
+    html.Hr(),
+    html.H5(
+        children='Molly Long, Waleed Shahzad, Sabrina Wang, Sarah Zebar',   style={'color': 'grey'}
+    ),
+    html.H5(
+        children='CAPP 30122 Winter 2026',
+        style={'color': 'grey'}
+    ),
+    html.Hr(),
+    html.Hr(),
     html.Hr(),
     html.Div(children=intro_text, 
              style={'white-space': 'pre-wrap'})
@@ -656,7 +670,7 @@ ratio = [
         ], justify="center", align="center"),
         html.Hr(),
         html.Hr(),
-        html.Div(transit_penalty_text),
+        html.Div(dcc.Markdown(transit_penalty_text)),
         html.Hr(),
         dbc.Row([
             html.H5(
