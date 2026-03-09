@@ -1,6 +1,7 @@
 import argparse
 from .join import join_api_csv, join_neighborhood_data
 from .make_csv import clean, group_rides, format_for_api, sample_and_split
+from .clean_route_data import clean_route_data, prep_data_for_map
 import pandas as pd
 
 ########################## CHANGE THESE PARAMETERS #############################
@@ -78,10 +79,28 @@ def main():
 
         # Add in pickup and dropoff neighborhood names
         neighborhood_boundaries = pd.read_csv(NEIGHBORHOOD_DATA)
-        rideshare_transit_data_w_neighborhoods = join_neighborhood_data(
+        rideshare_transit_data_neighborhoods = join_neighborhood_data(
             rideshare_transit_data, 
+            neighborhood_boundaries) # Takes 2-3 hours
+        
+        # Some minor cleaning 
+        # (adding transitPenalty variable, reformatting fields)
+        rideshare_transit_data_neighborhoods_clean = clean_route_data(
+            rideshare_transit_data_neighborhoods)
+
+        # Output disaggregated data set for data visualization
+        rideshare_transit_data_neighborhoods_clean.to_csv(
+            "./data/rideshare_transit_data.csv", index=False)
+        
+        # Output neighborhood-level dataset for map
+        neighborhood_route_data = prep_data_for_map(
+            rideshare_transit_data_neighborhoods_clean, 
             neighborhood_boundaries)
-        rideshare_transit_data_w_neighborhoods.to_csv(f"./data/{OUTPUT_NAME}_neighborhood.csv", index=False)
+        
+        neighborhood_route_data.to_csv(
+            "./data/neighborhood_route_data.csv", index=False
+        )
+
 
 
 if __name__ == "__main__":

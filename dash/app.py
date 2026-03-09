@@ -83,12 +83,12 @@ def neighborhood():
             "type": "Feature",
             "properties": {"line_weight": (row["opacity"]*5)+1,
                            "opacity": 1,
-                           "color": row["tripDiffRatioColor"],
+                           "color": row["transitPenaltyColor"],
                            "from": row["Pickup Neighborhood"],
                            "to": row["Dropoff Neighborhood"],
-                           "transitTime": round(row["totalTransitTime"],2),
-                           "rideshareTime": round(row["rideshareTime"],2),
-                           "ratio": round(row["tripDiffRatio"],2),
+                           "transitTime": round(row["totalTransitTime_wavg"],2),
+                           "rideshareTime": round(row["rideshareTime_wavg"],2),
+                           "ratio": round(row["transitPenalty_wavg"],2),
                            "n_rides": row["Count"],
                            "perc_rides": row["perc_rides"]},
             "geometry": {
@@ -127,6 +127,7 @@ def index():
     )
 
     # Build a single GeoJSON FeatureCollection from all neighborhoods
+    # This is to plot the neighborhood boundaries
     features = []
     for _, row in neighborhood_boundaries.iterrows():
         geom = from_wkt(row["the_geom"])
@@ -319,12 +320,12 @@ def update_panel(n):
 
     # Add in some neighborhood stats, weighted by count
     avg_tripDiffRatio = str(round(
-        np.average(filtered_neighborhood_routes["tripDiffRatio"], 
+        np.average(filtered_neighborhood_routes["transitPenalty_wavg"], 
            weights=filtered_neighborhood_routes["Count"]),
         2))
     
     avg_tripCost = str(round(
-        np.average(filtered_neighborhood_routes["Average Trip Total"], 
+        np.average(filtered_neighborhood_routes["tripCost_wavg"], 
            weights=filtered_neighborhood_routes["Count"]),
           2)).ljust(5, '0')
     
@@ -338,7 +339,7 @@ def update_panel(n):
     for i in range(5):
         ngb = top5_destinations[["Dropoff Neighborhood"]].values[i][0]
         perc = top5_destinations[["perc_rides"]].values[i][0]
-        ratio = round(top5_destinations[["tripDiffRatio"]].values[i][0],2)
+        ratio = round(top5_destinations[["transitPenalty_wavg"]].values[i][0],2)
         str_item = f"""{i+1}. {ngb} ({perc}% of rides) """
         top5.append(str_item)
 
@@ -383,7 +384,7 @@ map_display = html.Div([
             )
         ], style={
             "overflow": "hidden",
-            "flex": "1"             # ← takes remaining height after header
+            "flex": "1"            
         }),
 
         # Footer
@@ -391,8 +392,8 @@ map_display = html.Div([
 
     ], style={
         "display": "flex",
-        "flexDirection": "column",  # ← stack header and map vertically
-        "flex": "8",                # ← takes up 80% of page width
+        "flexDirection": "column",  
+        "flex": "8",                
     }),
 
     # Right column containing two panels
@@ -432,7 +433,7 @@ map_display = html.Div([
                         "backgroundColor": "yellow",
                         "border": "solid 1px black"
                     }),
-                    html.Span(" Transit Penalty Score 2 - 2.3")]),
+                    html.Span(" Transit Penalty Score 2 - 2.35")]),
             html.Div([
                 html.Div(None, style={
                         "display":"inline-block",
@@ -441,7 +442,7 @@ map_display = html.Div([
                         "backgroundColor": "orange",
                         "border": "solid 1px black"
                     }),
-                    html.Span(" Transit Penalty Score 2.3 - 2.7")]),
+                    html.Span(" Transit Penalty Score 2.4 - 2.8")]),
             html.Div([
                 html.Div(None, style={
                         "display":"inline-block",
@@ -450,7 +451,7 @@ map_display = html.Div([
                         "backgroundColor": "red",
                         "border": "solid 1px black"
                     }),
-                    html.Span(" Transit Penalty Score 2.7+")]),
+                    html.Span(" Transit Penalty Score 2.8+")]),
             html.P(dcc.Markdown("""**Transit Penalty Score** is the average ratio of transit time to
                         ride share time across all routes originating from a given neighborhood. For example,
                         a score of 2 means that, on average, the comparable transit route is twice as long as
