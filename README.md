@@ -6,7 +6,8 @@ We analyzed Chicago rideshare trips to understand when, where, and even why resi
 
 ## Execution
 To run the project dashboard:  
-*unzip* `neighborhood_route_data.csv.gz`
+*unzip* `neighborhood_route_data.csv.gz`  
+
 *run* `uv run dash/app.py -m`
 
 ## Preview 

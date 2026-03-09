@@ -270,14 +270,16 @@ def distribution_of_rides(
         'rideshareTime': 5,
         'totalTransitTime': 5,
         "Log Rideshare Min": 0.1,
-        "Log Transit Min": 0.1
+        "Log Transit Min": 0.1,
+        "Float Trip Miles": 1
     }
 
     domain_range ={
         'rideshareTime': [0, 100],
         'totalTransitTime': [0, 100],
         "Log Rideshare Min": [0, 2],
-        "Log Transit Min": [0.4, 2.3]
+        "Log Transit Min": [0.4, 2.3],
+        "Float Trip Miles": [0, 26]
     }
 
     chart = (
@@ -287,7 +289,7 @@ def distribution_of_rides(
             alt.X(
                 f"{row_chosen}:Q",
                 title=dropdown_options[row_chosen],
-                bin=alt.Bin(step=step_size[row_chosen])
+                bin=alt.Bin(step=step_size[row_chosen]),
             ).scale(domain=domain_range[row_chosen]),
             alt.Y(
                 "sum(Percentage):Q", 
