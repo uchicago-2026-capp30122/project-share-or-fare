@@ -1,6 +1,6 @@
 import pandas as pd
 import altair as alt
-from .transform_data import dataset_sample
+from .transform_data import dataset_sample, weighted_median
 
 
 
@@ -339,7 +339,7 @@ def transit_rideshare_comparison(df: pd.DataFrame):
 
     chart = (
         alt.Chart(short_df)
-        .mark_circle()#size=60)
+        .mark_circle()
         .encode(
             alt.X("rideshareTime:Q")
                 .title("Trip Time via Rideshare (Minutes)")
@@ -371,13 +371,12 @@ def distribution_of_ratio(df:pd.DataFrame):
     
     Author: Sabrina
     """
-    short_df = dataset_sample(df, 10)
-    short_df["transitPenalty"] = short_df["transitPenalty"].round(1)
+    df["transitPenalty"] = df["transitPenalty"].round(1)
 
-    median = weighted_median(short_df, "transitPenalty")
+    median = weighted_median(df, "transitPenalty")
 
     chart = (
-        alt.Chart(short_df)
+        alt.Chart(df)
         .mark_bar()
         .encode(
             alt.X(
@@ -457,8 +456,9 @@ def rides_by_month(df: pd.DataFrame):
             alt.Y(
                 "Average Rides Per Day:Q"
             ),
-        )
-        .configure_axisY(
+        ).configure_axis(
+            grid=False
+        ).configure_axisY(
             titleAngle=0,
             titleAlign="right",
             titleY=-12,
