@@ -201,7 +201,6 @@ def index():
             -webkit-tap-highlight-color: transparent !important;
         }
 
-        /* Chrome-specific */
         *:focus-visible {
             outline: none !important;
             box-shadow: none !important;
@@ -223,7 +222,6 @@ def index():
         } 
     setTimeout(function() {
         const mapObj = Object.values(window).find(v => v instanceof L.Map);
-        console.log("Map object found:", mapObj);
 
         let currentRoutesLayer = null;
 
@@ -236,7 +234,6 @@ def index():
                     
                     sublayer.on('click', function(e) {
                         const name = sublayer.feature.properties.name;
-                        console.log("Clicked:", name);
 
                         fetch('/set_neighborhood', {
                             method: 'POST',
@@ -251,7 +248,6 @@ def index():
                         })
                         .then(res => res.json())
                         .then(data => {
-                            console.log("Flask returned:", data);
                             if (currentRoutesLayer) {
                                 mapObj.removeLayer(currentRoutesLayer);
                             }
@@ -275,7 +271,6 @@ def index():
                                         opacity: 0.9,
                                     });
 
-                                    // Highlight on hover
                                     layer.on('mouseover', function(e) {
                                         layer.setStyle({
                                             weight: props.line_weight + 2,
@@ -283,7 +278,6 @@ def index():
                                         });
                                     });
 
-                                    // Reset on mouseout
                                     layer.on('mouseout', function(e) {
                                         currentRoutesLayer.resetStyle(layer);
                                     });
