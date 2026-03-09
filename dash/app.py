@@ -95,7 +95,7 @@ def neighborhood():
 
     # Use only top 5 destinations
     top5_destinations = filtered_neighborhood_routes.sort_values(
-        "Count", ascending=False).iloc[:5,:]
+        "Count", ascending=False).head(5)
 
     # Build a GeoJSON FeatureCollection from the matching routes
     features = []
@@ -346,14 +346,13 @@ def update_panel(n):
            weights=filtered_neighborhood_routes["Count"]),
           2)).ljust(5, '0')
     
-    
 
     # get just top 5 destinations
     top5_destinations = filtered_neighborhood_routes.sort_values(
-        "Count", ascending=False).iloc[:5,:]
+        "Count", ascending=False).head(5)
     
     top5 = []
-    for i in range(5):
+    for i in range(len(top5_destinations)):
         ngb = top5_destinations[["Dropoff Neighborhood"]].values[i][0]
         perc = top5_destinations[["perc_rides"]].values[i][0]
         ratio = round(top5_destinations[["transitPenalty_wavg"]].values[i][0],2)
@@ -361,7 +360,6 @@ def update_panel(n):
         top5.append(str_item)
 
     top5_repr = "\n".join(top5)
-
 
     return f"{current_neighborhood}", dcc.Markdown(f"""
 **Top 5 destinations:** \n
