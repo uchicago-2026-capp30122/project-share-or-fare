@@ -516,8 +516,11 @@ data_text = get_text('dash/text/data.txt')
 intro_text = get_text('dash/text/intro.txt')
 ratio_intro_text = get_text('dash/text/ratio_intro.txt')
 transit_penalty_text = get_text('dash/text/transit_penalty.txt')
-sampling_text = get_text('dash/text/sampling.txt')
 discussion_text = get_text('dash/text/discussion.txt')
+sampling_text = get_text('dash/text/sampling.txt')
+graph_sampling_text = get_text('dash/text/graph_sampling.txt')
+seasonal_text = get_text('dash/text/seasonal.txt')
+
 
 # Altair Histogram
 alt_hist = dvc.Vega(
@@ -734,12 +737,6 @@ neighborhood = [dbc.Col(children=[
 ]
 
 
-
-html.Div(
-    children=sampling_text,
-    style={"white-space": "pre-wrap"}
-)
-
 discussion = [dbc.Col(children=[
     html.Hr(),
     html.H3("Discussion of Results"),
@@ -750,14 +747,27 @@ discussion = [dbc.Col(children=[
     )
 ], width={"size": 10, "offset": 1})]
 
-s_blurb="We did some exploratory analysis on seasonality trends.  Based on our visuaization of average rideshare trips per day by month, we see a slight increase in rideshare trips over the warmer months. Future analysis can look into the statistical significance of these difference, as well as trying to udnerstand if and how public transportation alternatives influence people's rideshare habbits in different seasons."
+
+html.Div(
+    children=sampling_text,
+    style={"white-space": "pre-wrap"}
+)
+
+graph_sampling = [
+    html.Hr(),
+    html.Hr(),
+    html.H3("Random Subset to Reduce Load on Graphs"),
+    html.Hr(),
+    html.Div([graph_sampling_text]),
+]
+
 
 seasonality = [
     html.Hr(),
     html.Hr(),
     html.H3("Future Extensions: Seasonality Trends in Rideshare Usage"),
     html.Hr(),
-    html.Div([s_blurb]),
+    html.Div([seasonal_text]),
     html.Hr(),
     dbc.Row([
         html.H5(
@@ -785,6 +795,7 @@ appendix = [html.Div([
                     ),
                     html.Hr()
                 ]),
+                dbc.Row(graph_sampling),
                 dbc.Row(seasonality),
             ], 
             gap = 3)],
