@@ -39,14 +39,18 @@ def distance_vs_demand_quadrants(df):
     Distance (miles) vs Rideshare Demand by Neighborhood
     Scatter Plot with Quadrants
     """
-    neighborhood_stats = df.groupby(["Pickup Neighborhood"]).apply(
-        lambda g: pd.Series({
-            "distance_wavg": weighted_avg(g, "distance_wavg", "Count"),
-            'Count': g['Count'].sum()
-            })
-            ).sort_values(
-                by="Count",
-                ascending=False).reset_index()
+    # neighborhood_stats = df.groupby(["Pickup Neighborhood"]).apply(
+    #     lambda g: pd.Series({
+    #         "distance_wavg": weighted_avg(g, "distance_wavg", "Count"),
+    #         'Count': g['Count'].sum()
+    #         })
+    #         ).sort_values(
+    #             by="Count",
+    #             ascending=False).reset_index()
+
+    neighborhood_stats = df.sort_values(
+        by="distance_wavg",
+        ascending=False)
 
     # Averages for Quadrants (median)
     median_distance = neighborhood_stats["distance_wavg"].median()
@@ -101,7 +105,7 @@ def distance_vs_demand_quadrants(df):
     quadrant_labels = alt.Chart(quadrant_text).mark_text(fontSize=10, fontWeight="bold").encode(x="x:Q", y="y:Q", text="label:N") 
 
 
-    chart = (points + vline + hline + quadrant_labels).properties(title="Trip Distance vs. Rideshare Demand by Pickup Neighborhood", width=700, height=500).configure_axis(
+    chart = (points + vline + hline + quadrant_labels).properties(width=700, height=500).configure_axis(
         grid=False)
     
     return chart
@@ -132,23 +136,35 @@ def corridor_bar_chart(df):
     
     return chart
 
+def transit_penalty_heatmap(pickup_neighborhods, neighborhood_route_data):
 
-def transit_penalty_heatmap(df):
-
-    top_pickup_neighborhoods = df.sort_values("Count", ascending=False).head(20)["Pickup Neighborhood"].values
+    top_pickup_neighborhoods = pickup_neighborhods.sort_values("Count", ascending=False).head(20)["Pickup Neighborhood"].values
     top_pickup_neighborhoods = top_pickup_neighborhoods[(top_pickup_neighborhoods != "O'Hare") & (top_pickup_neighborhoods != "Garfield Ridge")]
 
-    heatmap_data = df[df["Pickup Neighborhood"].isin(top_pickup_neighborhoods) & 
-                      df["Dropoff Neighborhood"].isin(top_pickup_neighborhoods)]
+    heatmap_data = neighborhood_route_data[neighborhood_route_data["Pickup Neighborhood"].isin(top_pickup_neighborhoods) & 
+    neighborhood_route_data["Dropoff Neighborhood"].isin(top_pickup_neighborhoods)]
 
-    # heatmap_data = heatmap_data[["Pickup Neighborhood", "Dropoff Neighborhood", "transitPenalty_wavg", "Count", "tripCost_wavg"]]
     chart = alt.Chart(heatmap_data).mark_rect().encode(
         x='Pickup Neighborhood',
         y='Dropoff Neighborhood',
         color=alt.Color('transitPenalty_wavg', title="Avg. Transit Penalty").scale(scheme="redyellowgreen", reverse=True))
+
     return chart
 
+def rideshare_count_heatmap(pickup_neighborhoods, neighborhood_route_data):
 
+    top_pickup_neighborhoods = pickup_neighborhoods.sort_values("Count", ascending=False).head(20)["Pickup Neighborhood"].values
+
+
+    heatmap_data = neighborhood_route_data[neighborhood_route_data["Pickup Neighborhood"].isin(top_pickup_neighborhoods) & 
+    neighborhood_route_data["Dropoff Neighborhood"].isin(top_pickup_neighborhoods)]
+
+
+    chart = alt.Chart(heatmap_data).mark_rect().encode(
+        x='Pickup Neighborhood',
+        y='Dropoff Neighborhood',
+        color=alt.Color('Count', title= "# Rides"))
+    return chart
 
 def corridor_highest_price(df):
 
@@ -173,7 +189,7 @@ def corridor_highest_price(df):
         y=alt.Y("corridor:N", sort="-x", title="Neighborhood Corridor"),
         tooltip=["Pickup Neighborhood", "Dropoff Neighborhood", "tripCost_wavg", "Count"],
         color=alt.Color("Count"),
-    ).properties(title="Top 20 Highest Priced Neighborhood Corridors")
+    )
 
     return price_chart
 
@@ -200,7 +216,7 @@ def corridor_lowest_price(df):
         color=alt.Color("Count"),
         tooltip=["Pickup Neighborhood", "Dropoff Neighborhood", 
                  alt.Tooltip("tripCost_wavg", format=".2f", title="Average Fare ($)"), "Count"]
-    ).properties(title="Top 20 Lowest Priced Neighborhood Corridors")
+    )
 
     return price_chart
 
