@@ -324,6 +324,11 @@ def transit_rideshare_comparison(df: pd.DataFrame):
     """
     Creates a scatter plot between rideshare time and transit time
 
+    Arguments:
+        df: The pandas dataframe with rideshare and transit data
+
+    Returns: An altair chart, a scatter plot of rideshare and transit time
+
     Author: Sabrina
     """
     short_df = dataset_sample(df, 100)
@@ -348,12 +353,11 @@ def transit_rideshare_comparison(df: pd.DataFrame):
         .encode(
             x='rideshareTime', y='totalTransitTime'
         )
-        .configure_axisY(
-            titleAngle=0,
-            titleAlign="right",
-            titleY=-12,
-            titleX=0,
-        )
+    ).configure_axisY(
+        titleAngle=0,
+        titleAlign="right",
+        titleY=-12,
+        titleX=0,
     )
     
     return chart
