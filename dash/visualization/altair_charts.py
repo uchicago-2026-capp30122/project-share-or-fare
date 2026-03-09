@@ -260,13 +260,39 @@ def corridor_lowest_price():
 
 df = pd.read_csv("./data/rideshare_transit_data.csv")
 
-def distribution_of_rides(df: pd.DataFrame, row_chosen: str, dropdown_options):
+def distribution_of_rides(
+    df: pd.DataFrame, row_chosen: str, dropdown_options: dict
+):
     """
     Creates a histogram of the distribution of ride times
+
+    Arguments:
+        df: a pandas dataframe with rideshare and transit data
+        row_chosen: The dimension along which to create the histogram
+        dropdown_options: A dictionary matching the row options to their 
+            lable names
+    
+    Returns: An altair chart
 
     Author: Sabrina
     """
     short_df = dataset_sample(df, 10)
+    total_rides = short_df["Count"].sum()
+    short_df["Percentage"] = (short_df['Count'] / total_rides) * 100
+
+    step_size={
+        'rideshareTime': 5,
+        'totalTransitTime': 5,
+        "Log Rideshare Min": 0.1,
+        "Log Transit Min": 0.1
+    }
+
+    domain_range ={
+        'rideshareTime': [0, 100],
+        'totalTransitTime': [0, 100],
+        "Log Rideshare Min": [0, 2],
+        "Log Transit Min": [0.4, 2.3]
+    }
 
     chart = (
         alt.Chart(short_df)
@@ -275,9 +301,19 @@ def distribution_of_rides(df: pd.DataFrame, row_chosen: str, dropdown_options):
             alt.X(
                 f"{row_chosen}:Q",
                 title=dropdown_options[row_chosen],
-                bin=alt.Bin(step=5)
+                bin=alt.Bin(step=step_size[row_chosen])
+            ).scale(domain=domain_range[row_chosen]),
+            alt.Y(
+                "sum(Percentage):Q", 
+                title="Percentage of Rides"
             ),
-            alt.Y("sum(Count):Q", title="Number of Rides"),
+        ).configure_axis(
+            grid=False
+        ).configure_axisY(
+            titleAngle=0,
+            titleAlign="right",
+            titleY=-12,
+            titleX=0,
         )
     )
     
@@ -311,6 +347,12 @@ def transit_rideshare_comparison(df: pd.DataFrame):
         .mark_line(color='lightgray', thickness=0.2)
         .encode(
             x='rideshareTime', y='totalTransitTime'
+        )
+        .configure_axisY(
+            titleAngle=0,
+            titleAlign="right",
+            titleY=-12,
+            titleX=0,
         )
     )
     
