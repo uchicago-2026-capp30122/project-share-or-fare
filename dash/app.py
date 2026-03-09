@@ -12,11 +12,13 @@ import altair as alt
 import dash_vega_components as dvc
 from visualization.transform_data import log_transform_time, get_text
 from visualization.altair_charts import(
-    chart1,
-    chart2,
-    chart3,
-    price_chart,
-    chart5,
+    weighted_avg,
+    most_pickups,
+    distance_vs_demand_quadrants,
+    corridor_bar_chart,
+    transit_penalty_heatmap,
+    corridor_highest_price,
+    corridor_lowest_price,
     distribution_of_rides,
     distribution_of_ratio,
     transit_rideshare_comparison,
@@ -35,8 +37,19 @@ from visualization.altair_charts import(
 
 
 neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
-neighborhood_routes = pd.read_csv("data/neighborhood_route_data.csv")
+neighborhood_route_data = pd.read_csv("data/neighborhood_route_data.csv")
 
+# Get Pickup Neighbhorhood level data and take weighted averages (again)
+rides_by_neighborhood  = neighborhood_route_data.groupby(["Pickup Neighborhood","Dropoff Neighborhood"]).apply(
+    lambda g: pd.Series({
+        'totalTransitTime_wavg': weighted_avg(g, 'totalTransitTime_wavg', 'Count'),
+        'rideshareTime_wavg': weighted_avg(g, 'rideshareTime_wavg', 'Count'),
+        'tripCost_wavg': weighted_avg(g, "tripCost_wavg", 'Count'),
+        'transitPenalty_wavg': weighted_avg(g, "transitPenalty_wavg", 'Count'),
+        "distance_wavg": weighted_avg(g, "distance_wavg", "Count"),
+        'Count': g['Count'].sum()
+    })
+    ).reset_index()
 
 server = Flask(__name__)
 app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.LUX])
@@ -58,9 +71,9 @@ def filter_neighborhood(neighborhood):
     """
 
     # Don't want to include intra-neighborhood rides
-    filtered_neighborhood_routes = neighborhood_routes[
-        (neighborhood_routes['Pickup Neighborhood'] == neighborhood) &
-        (neighborhood_routes['Dropoff Neighborhood'] != neighborhood)
+    filtered_neighborhood_routes = neighborhood_route_data[
+        (neighborhood_route_data['Pickup Neighborhood'] == neighborhood) &
+        (neighborhood_route_data['Dropoff Neighborhood'] != neighborhood)
         ].sort_values("Count", ascending=False)
 
     # Add percentage of rides from pickup to each neighborhood
@@ -496,21 +509,23 @@ dropdown_options={
     'rideshareTime': 'Rideshare Time',
     'totalTransitTime': 'Corresponding Transit Time',
     "Log Rideshare Min": "Log Rideshare Min",
-    "Log Transit Min": "Log Transit Min"
+    "Log Transit Min": "Log Transit Min",
+    "Float Trip Miles": "Rideshare Distance"
 }
 
 # Load all text
 data_text = get_text('dash/text/data.txt')
 intro_text = get_text('dash/text/intro.txt')
 sampling_text = get_text('dash/text/sampling.txt')
-conclusion_text = get_text('dash/text/conclusion.txt')
+discussion_text = get_text('dash/text/discussion.txt')
 
 # Page components
 intro = [
     html.Hr(),
     html.Hr(),
     html.H1(children='Project Share or Fare'),
-    html.Div(children=intro_text)
+    html.Div(children=intro_text, 
+             style={'white-space': 'pre-wrap'})
 ]
 
 # Altair Histogram
@@ -521,7 +536,8 @@ alt_hist = dvc.Vega(
 hist1 = [
     html.Hr(),
     html.H3(children='A Brief Overview of Our Data'),
-    html.Div(children=data_text),
+    html.Div(children=data_text,
+             style={'white-space': 'pre-wrap'}),
     html.Hr(),
     html.H3("Distribution of Rideshare Data"),
     dbc.Col(children=[
@@ -557,29 +573,34 @@ distribution_of_ratio_chart = dvc.Vega(
 )
 
 # Neighborhood Analysis Charts
-top_neighborhoods = dvc.Vega(
+most_pickups_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=chart1.to_dict(),
+    spec=most_pickups(rides_by_neighborhood).to_dict(),
 )
 
-distance_ride_neighborhood = dvc.Vega(
+distance_vs_demand_quadrants_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=chart2.to_dict(),
+    spec=distance_vs_demand_quadrants(rides_by_neighborhood).to_dict(),
 )
 
-conectivity_pairs = dvc.Vega(
+corridor_bar_chart_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=chart3.to_dict(),
+    spec=corridor_bar_chart(rides_by_neighborhood).to_dict(),
 )
 
-price_corridor_chart = dvc.Vega(
+transit_penalty_heatmap_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=price_chart.to_dict(),
+    spec=transit_penalty_heatmap(rides_by_neighborhood).to_dict(),
 )
 
-connectivity_trips = dvc.Vega(
+corridor_highest_price_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=chart5.to_dict(),
+    spec=corridor_highest_price(rides_by_neighborhood).to_dict(),
+)
+
+corridor_lowest_price_analysis = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=corridor_lowest_price(rides_by_neighborhood).to_dict(),
 )
 
 # Seasonality Charts
@@ -622,23 +643,27 @@ neighborhood = [
     html.H3("Analysis of Neighborhood Trends"),
     html.Hr(),
     dbc.Row([
-        html.Div([top_neighborhoods]),
+        html.Div([most_pickups_analysis]),
     ]),
     html.Hr(),
     dbc.Row([
-        html.Div([distance_ride_neighborhood]),
+        html.Div([distance_vs_demand_quadrants_analysis]),
     ]),
     html.Hr(),
     dbc.Row([
-        html.Div([conectivity_pairs]),
+        html.Div([corridor_bar_chart_analysis]),
     ]),
     html.Hr(),
     dbc.Row([
-        html.Div([price_corridor_chart]),
+        html.Div([transit_penalty_heatmap_analysis]),
     ]),
     html.Hr(),
     dbc.Row([
-        html.Div([connectivity_trips]),
+        html.Div([corridor_highest_price_analysis]),
+    ]),
+    html.Hr(),
+    dbc.Row([
+        html.Div([corridor_lowest_price_analysis]),
     ]),
 ]
 
@@ -706,11 +731,11 @@ app.layout = dcc.Tabs([
         children=map_display,
     ),
     dcc.Tab(
-        label='4. Conclusion',
-        value='conclusion',
+        label='4. Discussion',
+        value='discussion',
         selected_style=tab_selected_style,
-        children="Placeholder text for conclusions"
-        # children=conclusion_text,
+        children=discussion_text, 
+        style={"white-space": "pre-wrap"}
     ),
     dcc.Tab(
         label='Appendix',
