@@ -664,7 +664,9 @@ ratio = [
                 style={'textAlign': 'center'}
             ),
             html.Div([distribution_of_ratio_chart]),
-        ], justify="center", align="center")
+        ], justify="center", align="center"),
+        html.Hr(),
+        html.Hr(),
     ],
     width={"size": 10, "offset": 1}
     )
@@ -709,6 +711,8 @@ neighborhood = [dbc.Col(children=[
     dbc.Row([
         html.Div([corridor_lowest_price_analysis]),
     ]),
+    html.Hr(),
+    html.Hr(),
 ], width={"size": 10, "offset": 1})
 ]
 
@@ -742,6 +746,8 @@ seasonality = [
         html.H5("Average Rides per Day by Month"),
         html.Div([rides_by_month_chart]),
     ]),
+    html.Hr(),
+    html.Hr(),
 ]
 
 appendix = [html.Div([
