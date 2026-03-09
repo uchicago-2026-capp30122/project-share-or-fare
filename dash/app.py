@@ -500,37 +500,33 @@ map_display = html.Div([
 })
 
 
-
+################################################################################
 # Data Processing
 df = pd.read_csv('./data/rideshare_transit_data.csv')
 df = log_transform_time(df)
 
 dropdown_options={
-    'rideshareTime': 'Rideshare Time',
-    'totalTransitTime': 'Corresponding Transit Time',
-    "Log Rideshare Min": "Log Rideshare Min",
-    "Log Transit Min": "Log Transit Min",
-    "Float Trip Miles": "Rideshare Distance"
+    'rideshareTime': 'Rideshare Trip Time (Minutes)',
+    'totalTransitTime': 'Corresponding Transit Trip Time (Minutes)',
+    "Log Rideshare Min": "Log of Rideshare Trip Time (Minutes)",
+    "Log Transit Min": "Log of Transit Trip Time (Minutes)",
+    "Float Trip Miles": "Rideshare Trip Distance (Miles)"
 }
 
 # Load all text
 data_text = get_text('dash/text/data.txt')
 intro_text = get_text('dash/text/intro.txt')
+ratio_intro_text = get_text('dash/text/ratio_intro.txt')
+transit_penalty_text = get_text('dash/text/transit_penalty.txt')
 sampling_text = get_text('dash/text/sampling.txt')
 discussion_text = get_text('dash/text/discussion.txt')
 
-# Page components
-intro = [
-    html.Hr(),
-    html.Hr(),
-    html.H1(children='Project Share or Fare'),
-    html.Div(children=intro_text, 
-             style={'white-space': 'pre-wrap'})
-]
-
 # Altair Histogram
 alt_hist = dvc.Vega(
-    id="altair-hist", opt={"renderer": "svg", "actions": False}, spec={}
+    id="altair-hist",
+    opt={"renderer": "svg", "actions": False},
+    spec={},
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 ),
 
 hist1 = [
@@ -539,23 +535,24 @@ hist1 = [
     html.Div(children=data_text,
              style={'white-space': 'pre-wrap'}),
     html.Hr(),
+    html.Hr(),
     html.H3("Distribution of Rideshare Data"),
     dbc.Col(children=[
+        dbc.Row(dbc.Col(children=[
+            html.Hr(),
+            html.Div("Please select what metric you would like to see the distribution of:"),
+            dcc.Dropdown(
+            options=dropdown_options,
+            value='rideshareTime',
+            id='xaxis-column'
+            )
+        ], width={"size": 6, "offset": 3})),
         dbc.Row([
-            dbc.Col(
-                alt_hist
-            ),
-            dbc.Col([
-                html.Hr(),
-                html.Div("Please select what metric you would like to see the distribution of:"),
-                dcc.Dropdown(
-                options=dropdown_options,
-                value='rideshareTime',
-                id='xaxis-column'
-                )
-            ])
-        ])
-    ])
+            html.Hr(),
+            html.Div(alt_hist)
+        ]),
+    ],
+    )
 ]
 
 ## Visualizations ##
@@ -565,42 +562,50 @@ alt.data_transformers.disable_max_rows()
 ride_by_transit = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=transit_rideshare_comparison(df).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 distribution_of_ratio_chart = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=distribution_of_ratio(df).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 # Neighborhood Analysis Charts
 most_pickups_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=most_pickups(rides_by_neighborhood).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 distance_vs_demand_quadrants_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=distance_vs_demand_quadrants(rides_by_neighborhood).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 corridor_bar_chart_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=corridor_bar_chart(rides_by_neighborhood).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 transit_penalty_heatmap_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=transit_penalty_heatmap(rides_by_neighborhood).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 corridor_highest_price_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=corridor_highest_price(rides_by_neighborhood).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 corridor_lowest_price_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=corridor_lowest_price(rides_by_neighborhood).to_dict(),
+    style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 # Seasonality Charts
@@ -609,7 +614,16 @@ rides_by_month_chart = dvc.Vega(
     spec=rides_by_month(df).to_dict(),
 )
 
-# Combine the content for each tab/page
+# Page components
+intro = [
+    html.Hr(),
+    html.Hr(),
+    html.Hr(),
+    html.H1(children='Project Share or Fare', style={'fontSize': '48px'}),
+    html.Hr(),
+    html.Div(children=intro_text, 
+             style={'white-space': 'pre-wrap'})
+]
 
 exploratory = [html.Div([
     dbc.Row(dbc.Col(
@@ -617,63 +631,113 @@ exploratory = [html.Div([
             dbc.Stack([
                 dbc.Row(intro),
                 dbc.Row(hist1),
-            ], 
-            gap = 3)],
+            ], gap = 3),
+            html.Hr(),
+            html.Hr()
+        ],
         width={"size": 10, "offset": 1},
     )), 
 ])]
 
 ratio = [
-    html.Hr(),
-    html.H3("Comparing Public Transportation Trip Time to Rideshare Trip Time"),
-    html.Hr(),
-    dbc.Row([
-        html.H5("Comparison of Public Tranportation and Rideshare Trip times"),
-        html.Div([ride_by_transit]),
-    ]),
-    html.Hr(),
-    dbc.Row([
-        html.H5("Distribution of Ratio of Transit to Rideshare Time"),
-        html.Div([distribution_of_ratio_chart]),
-    ])
+    dbc.Col(children=[
+        html.Hr(),
+        html.H3("Comparing Public Transportation Trip Time to Rideshare Trip Time"),
+        html.Hr(),
+        html.Hr(),
+        html.Div([ratio_intro_text]),
+        html.Hr(),
+        dbc.Row([
+            html.H5(
+                "Comparison of Public Tranportation and Rideshare Trip times",
+                style={'textAlign': 'center'}
+            ),
+            html.Div([ride_by_transit]),
+        ], justify="center", align="center"),
+        html.Hr(),
+        html.Hr(),
+        html.Div(transit_penalty_text),
+        html.Hr(),
+        dbc.Row([
+            html.H5(
+                "Distribution of Ratio of Transit to Rideshare Time",
+                style={'textAlign': 'center'}
+            ),
+            html.Div([distribution_of_ratio_chart]),
+        ], justify="center", align="center")
+    ],
+    width={"size": 10, "offset": 1}
+    )
 ]
 
-neighborhood = [
+neighborhood = [dbc.Col(children=[
     html.Hr(),
     html.H3("Analysis of Neighborhood Trends"),
+    html.Hr(),
+    html.Hr(),
     html.Hr(),
     dbc.Row([
         html.Div([most_pickups_analysis]),
     ]),
     html.Hr(),
+    html.Hr(),
+    html.Hr(),
     dbc.Row([
         html.Div([distance_vs_demand_quadrants_analysis]),
     ]),
+    html.Hr(),
+    html.Hr(),
     html.Hr(),
     dbc.Row([
         html.Div([corridor_bar_chart_analysis]),
     ]),
     html.Hr(),
+    html.Hr(),
+    html.Hr(),
     dbc.Row([
         html.Div([transit_penalty_heatmap_analysis]),
     ]),
+    html.Hr(),
+    html.Hr(),
     html.Hr(),
     dbc.Row([
         html.Div([corridor_highest_price_analysis]),
     ]),
     html.Hr(),
+    html.Hr(),
+    html.Hr(),
     dbc.Row([
         html.Div([corridor_lowest_price_analysis]),
     ]),
+], width={"size": 10, "offset": 1})
 ]
+
+
+
+html.Div(
+    children=sampling_text,
+    style={"white-space": "pre-wrap"}
+)
+
+discussion = [dbc.Col(children=[
+    html.Hr(),
+    html.H3("Discussion of Results"),
+    html.Hr(),
+    html.Div(
+        children=discussion_text,
+        style={"white-space": "pre-wrap"}
+    )
+], width={"size": 10, "offset": 1})]
 
 s_blurb="We did some exploratory analysis on seasonality trends.  Based on our visuaization of average rideshare trips per day by month, we see a slight increase in rideshare trips over the warmer months. Future analysis can look into the statistical significance of these difference, as well as trying to udnerstand if and how public transportation alternatives influence people's rideshare habbits in different seasons."
 
 seasonality = [
     html.Hr(),
+    html.Hr(),
     html.H3("Future Extensions: Seasonality Trends in Rideshare Usage"),
     html.Hr(),
     html.Div([s_blurb]),
+    html.Hr(),
     dbc.Row([
         html.H5("Average Rides per Day by Month"),
         html.Div([rides_by_month_chart]),
@@ -685,6 +749,8 @@ appendix = [html.Div([
         children=[
             dbc.Stack([
                 dbc.Row([
+                    html.Hr(),
+                    html.Hr(),
                     html.H3("Sampling Methodology"),
                     html.Hr(),
                     html.Div(
@@ -734,8 +800,7 @@ app.layout = dcc.Tabs([
         label='4. Discussion',
         value='discussion',
         selected_style=tab_selected_style,
-        children=discussion_text, 
-        style={"white-space": "pre-wrap"}
+        children=discussion
     ),
     dcc.Tab(
         label='Appendix',

@@ -297,11 +297,13 @@ def distribution_of_rides(
             ),
         ).configure_axis(
             grid=False
-        ).configure_axisY(
-            titleAngle=0,
-            titleAlign="right",
-            titleY=-12,
-            titleX=0,
+        # ).configure_axisY(
+        #     titleAngle=0,
+        #     titleAlign="right",
+        #     titleY=-12,
+        #     titleX=0,
+        ).properties(
+            title=f'Distribution of {dropdown_options[row_chosen]}'
         )
     )
     
@@ -343,12 +345,12 @@ def transit_rideshare_comparison(df: pd.DataFrame):
         )
     ).configure_axis(
         grid=False
-    ).configure_axisY(
-        titleAngle=0,
-        titleAlign="right",
-        titleY=-12,
-        titleX=0,
-    )
+    )#.configure_axisY(
+    #     titleAngle=0,
+    #     titleAlign="right",
+    #     titleY=-12,
+    #     titleX=0,
+    # )
     
     return chart
 
@@ -394,12 +396,12 @@ def distribution_of_ratio(df:pd.DataFrame):
         )
     ).configure_axis(
         grid=False
-    ).configure_axisY(
-        titleAngle=0,
-        titleAlign="right",
-        titleY=-12,
-        titleX=0,
-    )
+    )#.configure_axisY(
+    #     titleAngle=0,
+    #     titleAlign="right",
+    #     titleY=-12,
+    #     titleX=0,
+    # )
 
     return chart
 
@@ -446,12 +448,12 @@ def rides_by_month(df: pd.DataFrame):
             ),
         ).configure_axis(
             grid=False
-        ).configure_axisY(
-            titleAngle=0,
-            titleAlign="right",
-            titleY=-12,
-            titleX=0,
-        )
+        )#.configure_axisY(
+        #     titleAngle=0,
+        #     titleAlign="right",
+        #     titleY=-12,
+        #     titleX=0,
+        # )
     )
     
     return chart

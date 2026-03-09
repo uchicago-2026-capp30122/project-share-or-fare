@@ -76,5 +76,5 @@ def get_text(filepath: str) -> str:
         with open(filepath, 'r') as file:
             return file.read()
     except FileNotFoundError:
-        print("BAD FILE PATH")
+        print(f"Could not find file `{filepath}`")
         return ""
