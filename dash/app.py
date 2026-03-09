@@ -20,9 +20,19 @@ from visualization.altair_charts import(
     distribution_of_rides,
     distribution_of_ratio,
     transit_rideshare_comparison,
-    rides_by_month,
-    ratio_by_month
+    rides_by_month
 )
+
+
+################################################################################
+#
+# To run the dash app, from base project-share-or-fare directory run
+#   `uv run dash/app.py -m`
+#
+# `ctrl c` to stop running the app.
+#
+################################################################################
+
 
 neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
 neighborhood_routes = pd.read_csv("data/neighborhood_route_data.csv")
@@ -538,10 +548,10 @@ hist1 = [
     ])
 ]
 
-
-# Visualizations
+## Visualizations ##
 alt.data_transformers.disable_max_rows()
 
+# Rideshare to Transit Time Comparison
 ride_by_transit = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=transit_rideshare_comparison(df).to_dict(),
@@ -552,17 +562,7 @@ distribution_of_ratio_chart = dvc.Vega(
     spec=distribution_of_ratio(df).to_dict(),
 )
 
-rides_by_month_chart = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=rides_by_month(df).to_dict(),
-)
-
-ratio_by_month_chart = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=ratio_by_month(df).to_dict(),
-)
-
-# Waleed Charts
+# Neighborhood Analysis Charts
 top_neighborhoods = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
     spec=chart1.to_dict(),
@@ -588,8 +588,14 @@ connectivity_trips = dvc.Vega(
     spec=chart5.to_dict(),
 )
 
+# Seasonality Charts
+rides_by_month_chart = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=rides_by_month(df).to_dict(),
+)
 
-# Display all other visualizations
+# Combine the content for each tab/page
+
 exploratory = [html.Div([
     dbc.Row(dbc.Col(
         children=[
@@ -599,9 +605,8 @@ exploratory = [html.Div([
             ], 
             gap = 3)],
         width={"size": 10, "offset": 1},
-    )),  
-])
-]
+    )), 
+])]
 
 ratio = [
     html.Hr(),
@@ -616,21 +621,6 @@ ratio = [
         html.H5("Distribution of Ratio of Transit to Rideshare Time"),
         html.Div([distribution_of_ratio_chart]),
     ])
-]
-
-seasonality = [
-    html.Hr(),
-    html.H3("Seasonality Trends in Rideshare Usage"),
-    html.Hr(),
-    dbc.Row([
-        html.H5("Average Rides per Day by Month"),
-        html.Div([rides_by_month_chart]),
-    ]),
-    html.Hr(),
-    dbc.Row([
-        html.H5("Change in Transportation Time to Rideshare Time Ratio Over Time Compared to Temperature"),
-        html.Div([ratio_by_month_chart]),
-    ]),
 ]
 
 neighborhood = [
@@ -658,6 +648,38 @@ neighborhood = [
     ]),
 ]
 
+s_blurb="We did some exploratory analysis on seasonality trends.  Based on our visuaization of average rideshare trips per day by month, we see a slight increase in rideshare trips over the warmer months. Future analysis can look into the statistical significance of these difference, as well as trying to udnerstand if and how public transportation alternatives influence people's rideshare habbits in different seasons."
+
+seasonality = [
+    html.Hr(),
+    html.H3("Future Extensions: Seasonality Trends in Rideshare Usage"),
+    html.Hr(),
+    html.Div([s_blurb]),
+    dbc.Row([
+        html.H5("Average Rides per Day by Month"),
+        html.Div([rides_by_month_chart]),
+    ]),
+]
+
+appendix = [html.Div([
+    dbc.Row(dbc.Col(
+        children=[
+            dbc.Stack([
+                dbc.Row([
+                    html.H3("Sampling Methodology"),
+                    html.Hr(),
+                    html.Div(
+                        children=sampling_text,
+                        style={"white-space": "pre-wrap"}
+                    ),
+                    html.Hr()
+                ]),
+                dbc.Row(seasonality),
+            ], 
+            gap = 3)],
+        width={"size": 10, "offset": 1},
+    )), 
+])]
 
 ## App Layout ###
 tab_selected_style = {
@@ -672,41 +694,36 @@ app.layout = dcc.Tabs([
         children=exploratory,
     ),
     dcc.Tab(
-        label='Transit to Rideshare Time Ratio',
+        label='1. Comparison of Transit and Rideshare Times',
         value='ratio',
         selected_style=tab_selected_style,
         children=ratio,
     ),
     dcc.Tab(
-        label='Seasonality',
-        value='seasonality',
-        selected_style=tab_selected_style,
-        children=seasonality,
-    ),
-    dcc.Tab(
-        label='Map of Rides',
-        value='map',
-        selected_style=tab_selected_style,
-        children=map_display,
-    ),
-    dcc.Tab(
-        label='Neighborhood',
+        label='2. Neighborhood Level Analysis',
         value='neighborhood',
         selected_style=tab_selected_style,
         children=neighborhood,
     ),
     dcc.Tab(
-        label='Conclusion',
+        label='3. Map of Rides',
+        value='map',
+        selected_style=tab_selected_style,
+        children=map_display,
+    ),
+    dcc.Tab(
+        label='4. Conclusion',
         value='conclusion',
         selected_style=tab_selected_style,
         children="Placeholder text for conclusions"
         # children=conclusion_text,
     ),
     dcc.Tab(
-        label='Sampling Method',
-        value='sampling',
+        label='Appendix',
+        value='appendix',
         selected_style=tab_selected_style,
-        children=sampling_text,
+        children=appendix,
+        width="10%"
     ),
 ])
 
