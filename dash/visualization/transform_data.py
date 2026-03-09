@@ -48,6 +48,25 @@ def dataset_sample(df: pd.DataFrame, fraction: int) -> pd.DataFrame:
     return df
 
 
+def weighted_median(df: pd.DataFrame, col: str) -> float:
+    """
+    Gets the weighted median for the col
+
+    Arguments:
+        df: A pandas dataframe
+
+    Returns: A float, the median, weighted by number of rides (the `Count` col)
+
+    Author: Sabrina
+    """
+    df_sorted = df.sort_values(col)
+    cumsum = df_sorted["Count"].cumsum()
+    cutoff = df_sorted["Count"].sum() / 2
+    median = df_sorted[cumsum >= cutoff][col].iloc[0]
+    
+    return median
+
+
 def get_text(filepath: str) -> str:
     """
     
