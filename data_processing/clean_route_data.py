@@ -1,121 +1,94 @@
-# clean_route_data.py
-# Takes in small_medium_merged_neighborhood.csv  data, and:
-#  - aggregates to the pickup/dropoff neighborhood level
-#  - adds pickup/dropoff neighborhood polygons
-#  - adds "transit penalty score" (transitTime/rideshareTime)
-#  - adds color based on transit penalty score
-
-import folium
-from folium import plugins
-import webbrowser
 import pandas as pd
-import numpy as np
-from shapely.geometry import Polygon, box, Point
-from shapely import from_wkt
-import shapely.wkt
-
-# Define column names for convenience
-PICKUP_LAT = "Pickup Centroid Latitude"
-PICKUP_LONG = "Pickup Centroid Longitude"
-DROPOFF_LAT = "Dropoff Centroid Latitude"
-DROPOFF_LONG = "Dropoff Centroid Longitude"
-
-
-def standardize(x):
-    """
-    Standardizes value, used as weighting function for opacity/size
-    """
-    return (x-x.min())/(x.max()-x.min())
-
 
 
 def clean_route_data(route_data):
     """
-    Cleans and renames time fields, aggregates by Pickup and Dropoff neighborhood
+    Cleans and renames time fields on disaggregated data
     """
-    # convert totalTime field to minutes 
+    # drop NAs
+    route_data = route_data.dropna()
+
+    # convert totalTime field to int and minutes 
     route_data["totalTime"] = route_data["totalTime"].apply(lambda s: int(str(s)[:-1]))/60
 
     # convert ride share time to minutes
     route_data["Average Trip Minutes"] = route_data["Average Trip Seconds"]/60
 
+    # Rename columns for clarity
     route_data = route_data.rename(columns={
         "totalTime": "totalTransitTime",
         "Average Trip Minutes": "rideshareTime"
     })
 
-    # Aggregate route by pickup and dropoff neighborhood
-    route_data = route_data.groupby(["Pickup Neighborhood", "Dropoff Neighborhood"]).agg({
-    "totalTransitTime" : "mean",
-    "rideshareTime" : "mean",
-    "Count": "sum",
-    "Average Trip Total": "mean"
-    }).reset_index()
-    
+    # Add transitPenalty and color mapping
+    route_data["transitPenalty"] = route_data["totalTransitTime"]/route_data["rideshareTime"]
+
     return route_data
 
 
-def join_neighborhood_data(route_data, neighborhood_boundaries):
+
+def join_neighborhood_polygons(data, neighborhood_boundaries):
     """
-    Merge in polygon data
+    Merge in polygon data, helper function for prep_data_for_map
     """
 
     # Pickup neighborhood
-    route_data = route_data.merge(neighborhood_boundaries[["the_geom", "PRI_NEIGH"]], 
+    data = data.merge(neighborhood_boundaries[["the_geom", "PRI_NEIGH"]], 
                      left_on = "Pickup Neighborhood",
                      right_on = "PRI_NEIGH",
                      how = "left")
-    route_data = route_data.rename(columns = {"the_geom": "Pickup Neighborhood Polygon"})
+    data = data.rename(columns = {"the_geom": "Pickup Neighborhood Polygon"})
 
     # Dropoff neighborhood
-    route_data = route_data.merge(neighborhood_boundaries[["the_geom", "PRI_NEIGH"]], 
+    data = data.merge(neighborhood_boundaries[["the_geom", "PRI_NEIGH"]], 
                      left_on = "Dropoff Neighborhood",
                      right_on = "PRI_NEIGH",
                      how = "left")
-    route_data = route_data.rename(columns = {"the_geom": "Dropoff Neighborhood Polygon"})
+    data = data.rename(columns = {"the_geom": "Dropoff Neighborhood Polygon"})
 
 
-    # Filter out missing values *** To Do: look into why there are missing values
-    route_data=route_data[(route_data["Dropoff Neighborhood Polygon"] != "") &
-               (route_data["Pickup Neighborhood Polygon"] != "")]
+    # Filter out missing values 
+    data=data[(data["Dropoff Neighborhood Polygon"] != "") &
+               (data["Pickup Neighborhood Polygon"] != "")]
     
     
-    return route_data
-
-def aes_mapping(data):
-    """
-    Add trip diff variable and attributes for line weight, 
-    opacity, and color
-    """
-
-    # Add tripDiffRatio and color mapping
-    data["tripDiffRatio"] = data["totalTransitTime"]/data["rideshareTime"]
-    bins = [0, 0.25, 0.50, 0.75, 1]
-    labels = ["green", "yellow", "orange", "red"]
-    data["tripDiffRatioColor"] = pd.cut(data["tripDiffRatio"].rank(pct=True), bins=bins, labels=labels)
-
-
     return data
 
+def weighted_avg(group, value_col, weight_col):
+    """
+    Helper function for prep_data_for_map
+    """
+    return (group[value_col] * group[weight_col]).sum() / group[weight_col].sum()
 
 
-def main():
-    # Load in route data, clean and aggregate
-    route_data = pd.read_csv("data/small_medium_merged_neighborhood.csv", sep=",").dropna()
-    cleaned_route_data = clean_route_data(route_data)
-    print("Route Data Cleaned")
+def prep_data_for_map(route_data, neighborhood_boundaries):
+    """
+    This aggregates by neighborhood, merges in the polygon data,
+    and adds the color mapping variable based on transit Penalty
+    """
+    # First aggregate by pickup and dropoff neighborhood and take weighted avgs
+    neighborhood_level_data  = route_data.groupby(["Pickup Neighborhood", 
+                                                   "Dropoff Neighborhood"]).apply(
+        lambda g: pd.Series({
+            'totalTransitTime_wavg': weighted_avg(g, 'totalTransitTime', 'Count'),
+            'rideshareTime_wavg': weighted_avg(g, 'rideshareTime', 'Count'),
+            'tripCost_wavg': weighted_avg(g, "Average Trip Total", 'Count'),
+            'transitPenalty_wavg': weighted_avg(g, "transitPenalty", 'Count'),
+            'Count': g['Count'].sum()
+        })
+        ).reset_index()
 
-    # Load in neighborhood GIS data and join with route data
-    neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv", sep=",")
-    joined_data = join_neighborhood_data(cleaned_route_data, neighborhood_boundaries)
-    print("Join completed")
+    # Add color mapping based on transitPenalty
+    bins = [0, 0.25, 0.50, 0.75, 1]
+    labels = ["green", "yellow", "orange", "red"]
+    neighborhood_level_data["transitPenaltyColor"] = pd.cut(
+        neighborhood_level_data["transitPenalty_wavg"].rank(pct=True), 
+        bins=bins, labels=labels)
+    
+    neighborhood_level_data_w_polygons = join_neighborhood_polygons(
+        neighborhood_level_data, neighborhood_boundaries)
 
-    final_data = aes_mapping(joined_data)
-
-    # Output final dataset
-    final_data.to_csv("data/neighborhood_route_data.csv")
+    return neighborhood_level_data_w_polygons
 
 
-
-main()
 
