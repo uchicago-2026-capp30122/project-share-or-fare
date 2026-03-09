@@ -70,7 +70,7 @@ def distance_vs_demand_quadrants(df):
     points = alt.Chart(neighborhood_stats).mark_circle(size=180, opacity=0.6).encode(
         x=alt.X("distance_wavg:Q", title="Average Trip Distance (Miles)"),
         y=alt.Y("Count:Q", title="Log Total Rideshare Trips", scale=alt.Scale(type="log", domain=[1, 2000000])),
-        color=alt.Color("Quadrant:N", legend=None),
+        # color=alt.Color("Quadrant:N", legend=None),
         tooltip=["Pickup Neighborhood", 
                 alt.Tooltip("distance_wavg",format= ".2f", title = "Avg. Distance (Miles)"), 
                 alt.Tooltip("Count", title="# Rides")]
