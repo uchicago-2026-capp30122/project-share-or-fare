@@ -1,0 +1,4 @@
+Overview:
+This scatter plot compares average trip distance and total rideshare demand across pickup neighborhoods. For each neighborhood, the average trip distance is calculated as a weighted average (using ride counts as weights) and the total number of trips is aggregated. Median values of distance and demand are used to divide the chart into four quadrants: short distance/high demand, long distance/high demand, short distance/low demand, and long distance/low demand.
+
+Areas in the high-demand quadrants represent major pickup hubs, while neighborhoods with lower demand or longer trips highlight different usage patterns, revealing where rides are most frequent and how far they typically travel.

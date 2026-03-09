@@ -1,0 +1,2 @@
+Overview:
+This bar chart shows the top 20 pickup neighborhoods with the highest number of rideshare trips. The data is aggregated to calculate the total number of rides per pickup neighborhood, then sorted in descending order by ride count. From this, the top 20 neighborhoods with the most pickups are selected and displayed to highlight the areas that generate the most rideshare demand.

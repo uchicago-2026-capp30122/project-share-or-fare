@@ -1,0 +1,3 @@
+This chart highlights the neighborhood corridors with the lowest average rideshare fares. Trips where pickup and dropoff occur in the same neighborhood are removed, and corridors are created by pairing pickup and dropoff neighborhoods. To avoid outliers, corridors with very low trip counts (≤20) are filtered out. The fares for each corridor are calculated using the weighted average trip cost (based on ride counts), and the 20 lowest-priced corridors are displayed.
+
+The chart reveals routes where rideshare trips are relatively inexpensive, which may reflect shorter distances, lower demand, or areas with efficient travel connections.
