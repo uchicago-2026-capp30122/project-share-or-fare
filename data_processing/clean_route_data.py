@@ -74,6 +74,7 @@ def prep_data_for_map(route_data, neighborhood_boundaries):
             'rideshareTime_wavg': weighted_avg(g, 'rideshareTime', 'Count'),
             'tripCost_wavg': weighted_avg(g, "Average Trip Total", 'Count'),
             'transitPenalty_wavg': weighted_avg(g, "transitPenalty", 'Count'),
+            "distance_wavg": weighted_avg(g, "Float Trip Miles", 'Count'),
             'Count': g['Count'].sum()
         })
         ).reset_index()
