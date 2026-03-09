@@ -11,31 +11,16 @@ def weighted_avg(group, value_col, weight_col):
     """
     return (group[value_col] * group[weight_col]).sum() / group[weight_col].sum()
 
-# Pickup / Dropoff Neighborhood Data
-neighborhood_route_data = pd.read_csv("/.data/neighborhood_route_data.csv")
-
-# Get Pickup Neighbhorhood level data and take weighted averages (again)
-rides_by_neighborhood  = neighborhood_route_data.groupby(["Pickup Neighborhood"]).apply(
-    lambda g: pd.Series({
-        'totalTransitTime_wavg': weighted_avg(g, 'totalTransitTime_wavg', 'Count'),
-        'rideshareTime_wavg': weighted_avg(g, 'rideshareTime_wavg', 'Count'),
-        'tripCost_wavg': weighted_avg(g, "tripCost_wavg", 'Count'),
-        'transitPenalty_wavg': weighted_avg(g, "transitPenalty_wavg", 'Count'),
-        # "distance_wavg": weighted_avg(g, "distance_wavg", "Count"),
-        'Count': g['Count'].sum()
-    })
-    ).reset_index()
-
 
 ############ Neighborhood Analysis ###################################
 
-def most_pickups():
+def most_pickups(df):
     """
     Top Neighborhoods with the most rideshare trips 
     Total rides per neighborhood (in descending order sort highest to lowest
     
     """
-    rides_by_neighborhood = rides_by_neighborhood.sort_values(
+    rides_by_neighborhood = df.sort_values(
         by="Count", ascending=False).head(20)
 
     chart = alt.Chart(rides_by_neighborhood).mark_bar().encode(
@@ -49,21 +34,23 @@ def most_pickups():
     return chart
 
 
-def distance_vs_demand_quadrants():
+def distance_vs_demand_quadrants(df):
     """
     Distance (miles) vs Rideshare Demand by Neighborhood
     Scatter Plot with Quadrants
     """
-
-    neighborhood_stats = rides_by_neighborhood.sort_values(
-        by="distance_wavg",
-        ascending=False)
-
+    neighborhood_stats = df.groupby(["Pickup Neighborhood"]).apply(
+        lambda g: pd.Series({
+            "distance_wavg": weighted_avg(g, "distance_wavg", "Count"),
+            'Count': g['Count'].sum()
+            })
+            ).sort_values(
+                by="Count",
+                ascending=False).reset_index()
 
     # Averages for Quadrants (median)
     median_distance = neighborhood_stats["distance_wavg"].median()
     median_trips = neighborhood_stats["Count"].median()
-
 
     # Defining Quadrants
     def get_quadrant(row):
@@ -121,7 +108,7 @@ def distance_vs_demand_quadrants():
 
 
 
-def corridor_bar_chart():
+def corridor_bar_chart(df):
     """
     Transit vs Rideshare Connectivity by Neighborhood Corridors
     Bar Chart of Most and Least Connected Neighborhood Pairs
@@ -129,11 +116,10 @@ def corridor_bar_chart():
     Higher ratios (>1) indicate lower transit connectivity, meaning transit takes longer than rideshare
     """
     # Remove corridors where pickup and dropoff are the same
-    corridors = neighborhood_route_data[neighborhood_route_data["Pickup Neighborhood"] != neighborhood_route_data["Dropoff Neighborhood"]]
+    corridors = df[df["Pickup Neighborhood"] != df["Dropoff Neighborhood"]]
 
     # Create corridor label
     corridors["corridor"] = (corridors["Pickup Neighborhood"] + " → " + corridors["Dropoff Neighborhood"])
-
 
     top_corridors = corridors.sort_values("Count", ascending=False).head(20)
 
@@ -147,13 +133,13 @@ def corridor_bar_chart():
     return chart
 
 
-def transit_penalty_heatmap():
+def transit_penalty_heatmap(df):
 
-    top_pickup_neighborhoods = rides_by_neighborhood.sort_values("Count", ascending=False).head(20)["Pickup Neighborhood"].values
+    top_pickup_neighborhoods = df.sort_values("Count", ascending=False).head(20)["Pickup Neighborhood"].values
     top_pickup_neighborhoods = top_pickup_neighborhoods[(top_pickup_neighborhoods != "O'Hare") & (top_pickup_neighborhoods != "Garfield Ridge")]
 
-    heatmap_data = neighborhood_route_data[neighborhood_route_data["Pickup Neighborhood"].isin(top_pickup_neighborhoods) & 
-    neighborhood_route_data["Dropoff Neighborhood"].isin(top_pickup_neighborhoods)]
+    heatmap_data = df[df["Pickup Neighborhood"].isin(top_pickup_neighborhoods) & 
+                      df["Dropoff Neighborhood"].isin(top_pickup_neighborhoods)]
 
     # heatmap_data = heatmap_data[["Pickup Neighborhood", "Dropoff Neighborhood", "transitPenalty_wavg", "Count", "tripCost_wavg"]]
     chart = alt.Chart(heatmap_data).mark_rect().encode(
@@ -167,10 +153,10 @@ def transit_penalty_heatmap():
 
 
 
-def corridor_highest_price():
+def corridor_highest_price(df):
 
     # connectivity_stats = connectivity_stats[connectivity_stats["Pickup Neighborhood"] != connectivity_stats["Dropoff Neighborhood"]]
-    corridors = neighborhood_route_data[neighborhood_route_data["Pickup Neighborhood"] != neighborhood_route_data["Dropoff Neighborhood"]]
+    corridors = df[df["Pickup Neighborhood"] != df["Dropoff Neighborhood"]]
 
     # Create corridor label
     corridors["corridor"] = (corridors["Pickup Neighborhood"] + " → " + corridors["Dropoff Neighborhood"])
@@ -194,10 +180,10 @@ def corridor_highest_price():
 
     return price_chart
 
-def corridor_lowest_price():
+def corridor_lowest_price(df):
 
     # connectivity_stats = connectivity_stats[connectivity_stats["Pickup Neighborhood"] != connectivity_stats["Dropoff Neighborhood"]]
-    corridors = neighborhood_route_data[neighborhood_route_data["Pickup Neighborhood"] != neighborhood_route_data["Dropoff Neighborhood"]]
+    corridors = df[df["Pickup Neighborhood"] != df["Dropoff Neighborhood"]]
 
     # Create corridor label
     corridors["corridor"] = (corridors["Pickup Neighborhood"] + " → " + corridors["Dropoff Neighborhood"])
