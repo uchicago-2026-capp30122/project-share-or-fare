@@ -353,6 +353,8 @@ def transit_rideshare_comparison(df: pd.DataFrame):
         .encode(
             x='rideshareTime', y='totalTransitTime'
         )
+    ).configure_axis(
+        grid=False
     ).configure_axisY(
         titleAngle=0,
         titleAlign="right",
@@ -369,27 +371,47 @@ def distribution_of_ratio(df:pd.DataFrame):
     
     Author: Sabrina
     """
-    df["transitPenalty"] = df["transitPenalty"].round(1)
+    short_df = dataset_sample(df, 10)
+    short_df["transitPenalty"] = short_df["transitPenalty"].round(1)
+
+    median = weighted_median(short_df, "transitPenalty")
 
     chart = (
-        alt.Chart(df)
+        alt.Chart(short_df)
         .mark_bar()
         .encode(
             alt.X(
                 "transitPenalty:O", 
-                title="Ratio of Transit to Rideshare Time"),
+                title="Transit Penalty Score (Transit Time / Rideshare Time)",
+                scale=alt.Scale(domain=[k / 10 for k in range(4, 51)])
+            ),
             alt.Y("sum(Count):Q", title="Number of Rides"),
         )
         .interactive() 
         + 
         alt.Chart(pd.DataFrame({'transitPenalty': [1]}))
+        .mark_rule(color='lightgrey')
+        .encode(
+            alt.X(
+                'transitPenalty:O',
+                title="Transit Penalty Score (Transit Time / Rideshare Time)"
+            )
+        ) + 
+        alt.Chart(pd.DataFrame({'transitPenalty': [median]}))
         .mark_rule(color='red')
         .encode(
             alt.X(
                 'transitPenalty:O',
-                title="Ratio of Transit to Rideshare Time"
+                title="Transit Penalty Score (Transit Time / Rideshare Time)"
             )
         )
+    ).configure_axis(
+        grid=False
+    ).configure_axisY(
+        titleAngle=0,
+        titleAlign="right",
+        titleY=-12,
+        titleX=0,
     )
 
     return chart
