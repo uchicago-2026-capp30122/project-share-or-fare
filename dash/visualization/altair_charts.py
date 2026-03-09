@@ -301,6 +301,8 @@ def distribution_of_ratio(df:pd.DataFrame):
     
     Author: Sabrina
     """
+    df["transitPenalty"] = df["transitPenalty"].round(1)
+
     chart = (
         alt.Chart(df)
         .mark_bar()
