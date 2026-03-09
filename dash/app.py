@@ -534,6 +534,7 @@ hist1 = [
     html.H3(children='A Brief Overview of Our Data'),
     html.Div(children=data_text,
              style={'white-space': 'pre-wrap'}),
+    html.Div(children="There were 93,510,249 rideshare rides in Chicago in 2025. Our random sample contains 15,341,421 rides."),
     html.Hr(),
     html.Hr(),
     html.H3("Distribution of Rideshare Data"),
