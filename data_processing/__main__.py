@@ -7,7 +7,7 @@ import pandas as pd
 ########################## CHANGE THESE PARAMETERS #############################
 
 
-#### MAKE CSV OF SAMPLE DATA: ####
+#### MAKE CSVS OF SAMPLE DATA FOR API CALL INPUT: ####
 # 1. Set file name
 # Set this to your full local path to the raw data file.
 # This is the file download from chicago data portal with all rideshare rides
@@ -26,7 +26,7 @@ RAW_DATA_PATH = "~/Downloads/tnp.csv"
 #   `uv run python -m rideshare --makecsv 10000`
 
 
-#### JOIN: ####
+#### JOIN RIDESHARE AND TRANSIT DATA: ####
 # 1. Set file name
 # Set the name for the api response file, neighborhood data file, and the 
 # intended output file name.
@@ -38,9 +38,6 @@ OUTPUT_NAME = "small_medium_merged"
 # 2. Run the dataset
 # For the small-medium (500 and 10k rows) datasets, run:
 #   `uv run python -m rideshare --join` from project-share-or-fare directory
-#
-# For the large dataset (58k) run:
-#   `uv run python -m rideshare --join --l` from project-share-or-fare directory
 
 
 ###############################################################################
@@ -55,9 +52,6 @@ def main():
     )
     parser.add_argument(
         "--join", action="store_true", help="Join transit data into rideshare data"
-    )
-    parser.add_argument(
-        "--l", action="store_true", help="Join the large dataset"
     )
     args = parser.parse_args()
 
