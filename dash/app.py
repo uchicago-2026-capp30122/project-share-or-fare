@@ -10,7 +10,7 @@ import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import altair as alt
 import dash_vega_components as dvc
-from visualization.transform_data import clean_and_transform, get_text
+from visualization.transform_data import log_transform_time, get_text
 from visualization.altair_charts import(
     chart1,
     chart2,
@@ -483,13 +483,14 @@ map_display = html.Div([
 })
 
 
+
 # Data Processing
-df = pd.read_csv('./data/small_medium_merged.csv')
-df = clean_and_transform(df)
+df = pd.read_csv('./data/rideshare_transit_data.csv')
+df = log_transform_time(df)
 
 dropdown_options={
-    'Average Trip Minutes': 'Rideshare Time',
-    'totalTimeMin': 'Corresponding Transit Time',
+    'rideshareTime': 'Rideshare Time',
+    'totalTransitTime': 'Corresponding Transit Time',
     "Log Rideshare Min": "Log Rideshare Min",
     "Log Transit Min": "Log Transit Min"
 }
@@ -529,7 +530,7 @@ hist1 = [
                 html.Div("Please select what metric you would like to see the distribution of:"),
                 dcc.Dropdown(
                 options=dropdown_options,
-                value='Average Trip Minutes',
+                value='rideshareTime',
                 id='xaxis-column'
                 )
             ])

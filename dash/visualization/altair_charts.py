@@ -271,24 +271,24 @@ def transit_rideshare_comparison(df: pd.DataFrame):
     short_df = dataset_sample(df, 100)
 
     ratio_1_line = pd.DataFrame(
-        {'Average Trip Minutes': [0, 100], 'totalTimeMin': [0, 100]}
+        {'rideshareTime': [0, 100], 'totalTransitTime': [0, 100]}
     )
 
     chart = (
         alt.Chart(short_df)
         .mark_circle()#size=60)
         .encode(
-            alt.X("Average Trip Minutes:Q")
+            alt.X("rideshareTime:Q")
                 .title("Trip Time via Rideshare (Minutes)")
                 .scale(domain=[0, 100]),
-            alt.Y("totalTimeMin:Q")
+            alt.Y("totalTransitTime:Q")
                 .title("Trip Time via Public Transportation (Minutes)")
                 .scale(domain=[0, 100])
         ) +
         alt.Chart(ratio_1_line)
         .mark_line(color='lightgray', thickness=0.2)
         .encode(
-            x='Average Trip Minutes', y='totalTimeMin'
+            x='rideshareTime', y='totalTransitTime'
         )
     )
     
@@ -306,17 +306,17 @@ def distribution_of_ratio(df:pd.DataFrame):
         .mark_bar()
         .encode(
             alt.X(
-                "Transit Rideshare Ratio:O", 
+                "transitPenalty:O", 
                 title="Ratio of Transit to Rideshare Time"),
             alt.Y("sum(Count):Q", title="Number of Rides"),
         )
         .interactive() 
         + 
-        alt.Chart(pd.DataFrame({'Transit Rideshare Ratio': [1]}))
+        alt.Chart(pd.DataFrame({'transitPenalty': [1]}))
         .mark_rule(color='red')
         .encode(
             alt.X(
-                'Transit Rideshare Ratio:O',
+                'transitPenalty:O',
                 title="Ratio of Transit to Rideshare Time"
             )
         )
@@ -387,7 +387,7 @@ def ratio_by_month(df: pd.DataFrame):
     # Agregate by month, averaging transit-rideshare ratio
     ratio_per_month = (
         df.groupby('month', as_index=False)
-        .aggregate({'Transit Rideshare Ratio': 'mean'})
+        .aggregate({'transitPenalty': 'mean'})
         )
     
     # Create a small dataframe of average monthly temperature in 2025
@@ -423,7 +423,7 @@ def ratio_by_month(df: pd.DataFrame):
                 axis=alt.Axis(labelAngle=0)
             ),
             alt.Y(
-                "Transit Rideshare Ratio:Q",
+                "transitPenalty:Q",
                 title="Average Transit Time to Rideshare Time Ratio",
                 axis=alt.Axis(orient='left')
             ).scale(domain=[2, 2.7]),
