@@ -698,6 +698,9 @@ neighborhood = [dbc.Col(children=[
     html.Hr(),
     html.Hr(),
     dbc.Row([
+        html.H5(
+        "Transit Penalty for Most Frequented Neighborhoods (excl. airports)",
+        style={'textAlign': 'center'}),
         html.Div([transit_penalty_heatmap_analysis]),
     ]),
     html.Hr(),

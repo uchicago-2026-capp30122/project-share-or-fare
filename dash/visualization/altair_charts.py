@@ -145,10 +145,7 @@ def transit_penalty_heatmap(df):
     chart = alt.Chart(heatmap_data).mark_rect().encode(
         x='Pickup Neighborhood',
         y='Dropoff Neighborhood',
-        color=alt.Color('transitPenalty_wavg', title="Avg. Transit Penalty").scale(scheme="redyellowgreen", reverse=True)).properties(
-            title = "Transit Penalty for Most Frequented Neighborhoods (excl. airports)"
-        )
-
+        color=alt.Color('transitPenalty_wavg', title="Avg. Transit Penalty").scale(scheme="redyellowgreen", reverse=True))
     return chart
 
 
