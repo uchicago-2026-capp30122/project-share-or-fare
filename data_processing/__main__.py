@@ -20,10 +20,10 @@ RAW_DATA_PATH = "~/Downloads/tnp.csv"
 # member's name, in the data directory.
 #
 # Run the following command, replacing n with the number of rows
-#   `uv run python -m rideshare --makecsv n`
+#   `uv run python -m data_processing --makecsv n`
 #
 # For example, for 10k rows, run
-#   `uv run python -m rideshare --makecsv 10000`
+#   `uv run python -m data_processing --makecsv 10000`
 
 
 #### JOIN RIDESHARE AND TRANSIT DATA: ####
@@ -37,7 +37,7 @@ OUTPUT_NAME = "small_medium_merged"
 
 # 2. Run the dataset
 # For the small-medium (500 and 10k rows) datasets, run:
-#   `uv run python -m rideshare --join` from project-share-or-fare directory
+#   `uv run python -m data_processing --join` from project-share-or-fare directory
 
 
 ###############################################################################
