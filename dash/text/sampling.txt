@@ -1,9 +1,0 @@
-Our analysis utilizes a comprehensive dataset of approximately 90 million Chicago rideshare trips from 2025. To navigate the constraint of limited API funding, we employed a stratified grouping strategy to maximize the utility of several thousand calls. Trips were aggregated based on three high-correlation variables:
-
-Spatial Proximity: Start and end coordinates rounded to ~111m.
-
-Temporal Alignment: Start times rounded to the nearest hour.
-
-Day Type: Categorized by weekday, Saturday, or Sunday.
-
-This approach assumes stable transit schedules and consistent traffic patterns across similar day-types and hours. While these variables may fluctuate, the methodology ensures a representative overview of Chicago’s transit landscape within budget. We then executed a weighted random sample of these groups, distributed across four parallel processing tracks for API execution. Finally, the resulting transit alternatives were merged back into the primary dataset with a many-to-one join, and neighborhood spatial data were merged via a spatial point-to-polygon join.

@@ -1,3 +1,0 @@
-This chart examines transit connectivity compared to rideshare across neighborhood corridors (pickup → drop-off pairs). Corridors are created by pairing the pickup and drop-off neighborhoods and removing intra-neighborhood travel. The data is then sorted by trip count and the top 20 most frequent corridors are selected. For each corridor, the average transit penalty (the ratio of transit travel time to rideshare travel time) is calculated.
-
-A ratio close to 1 indicates similar travel times, suggesting strong transit connectivity, while higher ratios mean transit takes longer than rideshare, indicating weaker connectivity. The chart highlights which major travel corridors are well served by transit and where rideshare offers a faster alternative.
