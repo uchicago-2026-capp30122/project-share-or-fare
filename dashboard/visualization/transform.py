@@ -1,8 +1,3 @@
-"""
-Description:
-    This file contains the functions to load our combined dataset and
-    apply any transformations needed for visualizations
-"""
 import pandas as pd
 import random
 import math
@@ -10,6 +5,14 @@ import math
 
 def log_transform_time(df: pd.DataFrame) -> pd.DataFrame:
     """
+    Creates columns for log trip time in the given dataframe
+
+    Arguments:
+        df: A pandas dataframe
+    
+    Returns: A pandas dataframe with additional columns log of ridshare time
+        and log of transit time
+
     Author: Sabrina
     """
     df["Log Rideshare Min"] = (df['rideshareTime']).apply(math.log10)
@@ -50,7 +53,7 @@ def dataset_sample(df: pd.DataFrame, fraction: int) -> pd.DataFrame:
 
 def weighted_median(df: pd.DataFrame, col: str) -> float:
     """
-    Gets the weighted median for the col
+    Gets the weighted median for the given col
 
     Arguments:
         df: A pandas dataframe
@@ -69,6 +72,12 @@ def weighted_median(df: pd.DataFrame, col: str) -> float:
 
 def get_text(filepath: str) -> str:
     """
+    Loads the text in a file as a string variable
+
+    Arguments: 
+        filepath: The filepath to a .txt file
+    
+    Returns: A string, the content of the text file
     
     Author: Sabrina
     """

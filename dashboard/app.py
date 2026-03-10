@@ -11,7 +11,7 @@ import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import altair as alt
 import dash_vega_components as dvc
-from visualization.transform_data import log_transform_time, get_text
+from dash.visualization.transform import log_transform_time, get_text
 from visualization.altair_charts import(
     weighted_avg,
     most_pickups,
