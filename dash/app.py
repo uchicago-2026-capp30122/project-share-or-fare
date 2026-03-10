@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import folium
+import branca
 from folium import GeoJson, GeoJsonTooltip
 import pandas as pd
 from shapely import from_wkt
@@ -17,6 +18,7 @@ from visualization.altair_charts import(
     distance_vs_demand_quadrants,
     corridor_bar_chart,
     transit_penalty_heatmap,
+    rideshare_count_heatmap,
     corridor_highest_price,
     corridor_lowest_price,
     distribution_of_rides,
@@ -40,7 +42,7 @@ neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
 neighborhood_route_data = pd.read_csv("data/neighborhood_route_data.csv")
 
 # Get Pickup Neighbhorhood level data and take weighted averages (again)
-rides_by_neighborhood  = neighborhood_route_data.groupby(["Pickup Neighborhood","Dropoff Neighborhood"]).apply(
+pickup_neighborhoods = neighborhood_route_data.groupby(["Pickup Neighborhood"]).apply(
     lambda g: pd.Series({
         'totalTransitTime_wavg': weighted_avg(g, 'totalTransitTime_wavg', 'Count'),
         'rideshareTime_wavg': weighted_avg(g, 'rideshareTime_wavg', 'Count'),
@@ -177,6 +179,7 @@ def index():
         }
     """
 
+
     GeoJson(
         geojson_data,
         tooltip=GeoJsonTooltip(fields=["name"], aliases=[""]),
@@ -311,8 +314,6 @@ def index():
     m.get_root().html.add_child(folium.Element(css))
     m.get_root().html.add_child(folium.Element(click_handler_script))
     m.get_root().html.add_child(folium.Element(js_code))
-    # m.get_root().html.add_child(folium.Element(css_map_fill))
-
     html_str = m._repr_html_()
 
     return html_str
@@ -574,39 +575,45 @@ distribution_of_ratio_chart = dvc.Vega(
 )
 
 # Neighborhood Analysis Charts
-most_pickups_analysis = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=most_pickups(rides_by_neighborhood).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-)
+# most_pickups_analysis = dvc.Vega(
+#     opt={"renderer": "svg", "actions": False},
+#     spec=most_pickups(pickup_neighborhoods).to_dict(),
+#     style={"display": "flex", "justifyContent": "center", "width": "100%"}
+# )
 
 distance_vs_demand_quadrants_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=distance_vs_demand_quadrants(rides_by_neighborhood).to_dict(),
+    spec=distance_vs_demand_quadrants(pickup_neighborhoods).to_dict(),
     style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
-corridor_bar_chart_analysis = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=corridor_bar_chart(rides_by_neighborhood).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-)
+# corridor_bar_chart_analysis = dvc.Vega(
+#     opt={"renderer": "svg", "actions": False},
+#     spec=corridor_bar_chart(pickup_neighborhoods).to_dict(),
+#     style={"display": "flex", "justifyContent": "center", "width": "100%"}
+# )
 
 transit_penalty_heatmap_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=transit_penalty_heatmap(rides_by_neighborhood).to_dict(),
+    spec=transit_penalty_heatmap(pickup_neighborhoods, neighborhood_route_data).to_dict(),
     style={"display": "flex", "justifyContent": "center", "width": "100%"}
+)
+
+rideshare_count_heatmap_analysis = dvc.Vega(
+    opt={"renderer": "svg", "actions": False},
+    spec=rideshare_count_heatmap(pickup_neighborhoods, neighborhood_route_data).to_dict(),
+    style={"display": "flex", "justifyContent": "center"}
 )
 
 corridor_highest_price_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=corridor_highest_price(rides_by_neighborhood).to_dict(),
+    spec=corridor_highest_price(neighborhood_route_data).to_dict(),
     style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
 corridor_lowest_price_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=corridor_lowest_price(rides_by_neighborhood).to_dict(),
+    spec=corridor_lowest_price(neighborhood_route_data).to_dict(),
     style={"display": "flex", "justifyContent": "center", "width": "100%"}
 )
 
@@ -689,52 +696,84 @@ ratio = [
     )
 ]
 
-neighborhood = [dbc.Col(children=[
-    html.Hr(),
-    html.H3("Analysis of Neighborhood Trends"),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    dbc.Row([
-        html.Div([most_pickups_analysis]),
-    ]),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    dbc.Row([
-        html.Div([distance_vs_demand_quadrants_analysis]),
-    ]),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    dbc.Row([
-        html.Div([corridor_bar_chart_analysis]),
-    ]),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    dbc.Row([
-        html.H5(
-        "Transit Penalty for Most Frequented Neighborhoods (excl. airports)",
-        style={'textAlign': 'center'}),
+## Neighborhood Analysis Page Format
+
+
+graph1 = dbc.Card([
+    dbc.CardHeader("Most Frequented Neighborhood Corridors"),
+    dbc.CardBody([
+        html.Div([rideshare_count_heatmap_analysis]),
+        html.P("This is some text", className="card-text")
+    ])
+])
+
+
+graph2 = dbc.Card([
+    dbc.CardHeader("Transit Penalty for Most Frequented Neighborhood Corridors (excl. airports)"),
+    dbc.CardBody([
         html.Div([transit_penalty_heatmap_analysis]),
-    ]),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    dbc.Row([
+        html.P("This is some text", className="card-text")
+    ])
+])
+
+
+
+graph3 = dbc.Card([
+    dbc.CardHeader("Trip Distance vs. Demand"),
+    dbc.CardBody([
+        html.Div([distance_vs_demand_quadrants_analysis]),
+        html.P("This is some text", className="card-text")
+    ])
+])
+
+text3 = dbc.Card([
+    dbc.CardBody([
+        html.P("This is some text", className="card-text")
+    ])
+])
+
+graph4 = dbc.Card([
+    dbc.CardHeader("Top 20 Highest Priced Neighborhood Corridors"),
+    dbc.CardBody([
         html.Div([corridor_highest_price_analysis]),
-    ]),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    dbc.Row([
+        html.P("This is some text", className="card-text")
+    ])
+])
+
+graph5 = dbc.Card([
+    dbc.CardHeader("Top 20 Lowest Priced Neighborhood Corridors"),
+    dbc.CardBody([
         html.Div([corridor_lowest_price_analysis]),
-    ]),
-    html.Hr(),
-    html.Hr(),
-], width={"size": 10, "offset": 1})
-]
+        html.P("This is some text", className="card-text")
+    ])
+])
+
+
+row_1 = dbc.Row(
+    [
+        dbc.Col(graph1),
+        dbc.Col(graph2),
+    ],
+    className="mb-4",
+)
+
+row_2 = dbc.Row(
+    [
+        dbc.Col(graph4),
+        dbc.Col(graph5),
+    ],
+    className="mb-4",
+)
+
+row_3 = dbc.Row(
+    [
+        dbc.Col(graph3),
+        dbc.Col(text3)
+    ],
+    className="mb-4",
+)
+
+neighborhood = html.Div([row_1, row_2, row_3])
 
 
 discussion = [dbc.Col(children=[
