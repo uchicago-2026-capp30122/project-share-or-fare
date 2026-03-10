@@ -1,0 +1,44 @@
+{
+  "routes": [
+    {
+      "legs": [
+        {
+          "steps": [
+            {
+              "distanceMeters": 100,
+              "staticDuration": "5s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 100,
+              "staticDuration": "5s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 100,
+              "staticDuration": "695s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 100,
+              "staticDuration": "5s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 100,
+              "staticDuration": "5s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 100,
+              "staticDuration": "5s",
+              "travelMode": "WALK"
+            }
+          ]
+        }
+      ],
+      "distanceMeters": 5000,
+      "duration": "1496s"
+    }
+  ]
+}
