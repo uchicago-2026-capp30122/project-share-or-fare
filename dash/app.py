@@ -14,9 +14,9 @@ import dash_vega_components as dvc
 from visualization.transform_data import log_transform_time, get_text
 from visualization.altair_charts import(
     weighted_avg,
-    most_pickups,
+    # most_pickups,
     distance_vs_demand_quadrants,
-    corridor_bar_chart,
+    # corridor_bar_chart,
     transit_penalty_heatmap,
     rideshare_count_heatmap,
     corridor_highest_price,
@@ -26,6 +26,7 @@ from visualization.altair_charts import(
     transit_rideshare_comparison,
     rides_by_month
 )
+from js import JS_CODE, CSS_STYLING
 
 
 ################################################################################
@@ -41,7 +42,7 @@ from visualization.altair_charts import(
 neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
 neighborhood_route_data = pd.read_csv("data/neighborhood_route_data.csv")
 
-# Get Pickup Neighbhorhood level data and take weighted averages (again)
+# Get Pickup Neighbhorhood level data and take weighted averages
 pickup_neighborhoods = neighborhood_route_data.groupby(["Pickup Neighborhood"]).apply(
     lambda g: pd.Series({
         'totalTransitTime_wavg': weighted_avg(g, 'totalTransitTime_wavg', 'Count'),
@@ -88,18 +89,36 @@ def filter_neighborhood(neighborhood):
     return filtered_neighborhood_routes
 
 
+
+@server.route('/set_neighborhood', methods=['POST'])
+def set_neighborhood():
+    """
+    Sets the current neighborhood global variable
+    """
+    global current_neighborhood
+    current_neighborhood = request.get_json().get('name')
+    return jsonify({"status": "ok"})
+
+
 @server.route('/neighborhood', methods=['POST'])
 def neighborhood():
-    data = request.get_json()
-    name = data.get('name')
+    """
+    Returns a JSON of the geometries for the top 5 routes originating from 
+    current_neighborhood
+    """
+
+    # Use global
+    global current_neighborhood
+
+
     # Filter routes dataframe for this neighborhood
-    filtered_neighborhood_routes = filter_neighborhood(name)
+    filtered_neighborhood_routes = filter_neighborhood(current_neighborhood)
 
     # Use only top 5 destinations
     top5_destinations = filtered_neighborhood_routes.sort_values(
         "Count", ascending=False).head(5)
 
-    # Build a GeoJSON FeatureCollection from the matching routes
+    # Add geometries and features of each destination to dictionary
     features = []
     for _, row in top5_destinations.iterrows():
         pickup_poly = from_wkt(row["Pickup Neighborhood Polygon"])
@@ -126,7 +145,7 @@ def neighborhood():
         })
 
     return jsonify({
-        "name": name,
+        "name": current_neighborhood,
         "routes": {
             "type": "FeatureCollection",
             "features": features
@@ -134,15 +153,14 @@ def neighborhood():
     })
     
 
-@server.route('/set_neighborhood', methods=['POST'])
-def set_neighborhood():
-    global current_neighborhood
-    current_neighborhood = request.get_json().get('name')
-    return jsonify({"status": "ok"})
-
 
 @server.route('/')
-def index():
+def make_map():
+    """
+    Makes the Folium map + Chicago neighborhood boundaries, and injects
+    CSS styling and Javascript code to handle drawing the routes on click
+    """
+    # Initialize Folium Map of Chicago
     m = folium.Map(
         location=(41.86721, -87.63231),
         zoom_control=False,
@@ -151,8 +169,7 @@ def index():
         
     )
 
-    # Build a single GeoJSON FeatureCollection from all neighborhoods
-    # This is to plot the neighborhood boundaries
+    # Plot neighborhood boundaries
     features = []
     for _, row in neighborhood_boundaries.iterrows():
         geom = from_wkt(row["the_geom"])
@@ -162,158 +179,19 @@ def index():
             "geometry": geom.__geo_interface__
         })
 
-    geojson_data = {"type": "FeatureCollection", "features": features}
-
-    # This is what shows the neighborhood name when hovering
-    on_each_feature = """
-        function test(feature, layer) {
-            layer.on('click', function(e) {
-                fetch('/neighborhood', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ name: feature.properties.name })
-                })
-                .then(res => res.json())
-                .then(data => console.log('Flask response:', data));
-            });
-        }
-    """
-
+    boundaries = {"type": "FeatureCollection", "features": features}
 
     GeoJson(
-        geojson_data,
+        boundaries,
         tooltip=GeoJsonTooltip(fields=["name"], aliases=[""]),
         style_function=lambda f: {'fillOpacity': 0.2, 'weight': 1.5, 'color': '#2a6ebb'},
         highlight_function=lambda f: {'fillOpacity': 0.5},
     ).add_to(m)
 
-    # Inject the click handler JS directly into the map's root HTML
-    click_handler_script = f"""
-        <script> 
-        document.addEventListener('DOMContentLoaded', function() {{
-            setTimeout(function() {{
-                {on_each_feature}
-                Object.values(window).forEach(function(v) {{
-                    if (v && v.eachLayer) {{
-                        v.eachLayer(function(layer) {{
-                            if (layer.feature) {{
-                                var fn = {on_each_feature};
-                                fn(layer.feature, layer);
-                            }}
-                        }});
-                    }}
-                }});
-            }}, 500);
-        }});
-        </script>
-    """
-
-    # Inject custom CSS to remove bounding box
-    css = """
-        <style>
-        * :focus {
-            outline: none !important;
-            box-shadow: none !important;
-            -webkit-tap-highlight-color: transparent !important;
-        }
-
-        *:focus-visible {
-            outline: none !important;
-            box-shadow: none !important;
-        }
-        </style>
-    """
 
 
-
-    # Javascript code for mapping route lines when a neighborhood is clicked
-    js_code  = """
-    <script>
-    function styleByFeatureType(feature) {
-        return {
-            color: feature.properties.color, 
-            weight: feature.properties.line_weight,
-            opacity: feature.properties.opacity
-            };
-        } 
-    setTimeout(function() {
-        const mapObj = Object.values(window).find(v => v instanceof L.Map);
-
-        let currentRoutesLayer = null;
-
-        mapObj.eachLayer(function(layer) {
-            console.log("Found layer:", layer);
-            
-            if (layer.eachLayer) {
-                layer.eachLayer(function(sublayer) {
-                    console.log("Found sublayer:", sublayer);
-                    
-                    sublayer.on('click', function(e) {
-                        const name = sublayer.feature.properties.name;
-
-                        fetch('/set_neighborhood', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ name: name })
-                        });
-
-                        fetch('/neighborhood', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ name: name })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (currentRoutesLayer) {
-                                mapObj.removeLayer(currentRoutesLayer);
-                            }
-                            currentRoutesLayer = L.geoJSON(data.routes, {
-                                style: styleByFeatureType,
-                                onEachFeature: function(feature, layer) {
-                                    const props = feature.properties;
-
-                                    const tooltipContent = `
-                                        <b>From ${props['from']} to ${props['to']}</b><br>
-                                        <b>Avg. Transit Time:</b> ${props['transitTime']} min. <br>
-                                        <b>Avg. Ride Share Time:</b> ${props['rideshareTime']} min. <br>
-                                        <b>% Neighborhood Rides:</b> ${props['perc_rides']}%<br>
-                                        <b>Transit/Rideshare Time Ratio: </b> ${props['ratio']}
-
-                                    `;
-
-                                    layer.bindTooltip(tooltipContent, {
-                                        sticky: true,      
-                                        direction: 'top',
-                                        opacity: 0.9,
-                                    });
-
-                                    layer.on('mouseover', function(e) {
-                                        layer.setStyle({
-                                            weight: props.line_weight + 2,
-                                            opacity: 1
-                                        });
-                                    });
-
-                                    layer.on('mouseout', function(e) {
-                                        currentRoutesLayer.resetStyle(layer);
-                                    });
-                                }
-                            }).addTo(mapObj);
-                        })
-                        .catch(err => console.log("Fetch error:", err));
-                    });
-                });
-            }
-        });
-
-    }, 1000);
-    </script>
-    """
-
-
-    m.get_root().html.add_child(folium.Element(css))
-    m.get_root().html.add_child(folium.Element(click_handler_script))
-    m.get_root().html.add_child(folium.Element(js_code))
+    m.get_root().html.add_child(folium.Element(CSS_STYLING))
+    m.get_root().html.add_child(folium.Element(JS_CODE))
     html_str = m._repr_html_()
 
     return html_str
@@ -325,6 +203,9 @@ def index():
     Input("poll-interval", "n_intervals")
 )
 def update_panel(n):
+    """
+    This updates the panel on the top right when a neighboorhood is clicked.
+    """
     global current_neighborhood
 
     if not current_neighborhood:
@@ -393,7 +274,7 @@ map_display = html.Div([
         html.Div([
             html.Iframe(
                 id="folium-map",
-                srcDoc=index(),
+                srcDoc=make_map(),
                 width="100%",
                 height="100%",
                 style={"border": "none", "display": "block"}
