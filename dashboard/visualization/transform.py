@@ -23,7 +23,7 @@ def log_transform_time(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     df["Log Transit Min"] = (df["Log Transit Min"]).apply(
-        lambda x: math.trunc(x * 100) / 100
+        lambda x: math.trunc(x * 10) / 10
     )
 
     return df
