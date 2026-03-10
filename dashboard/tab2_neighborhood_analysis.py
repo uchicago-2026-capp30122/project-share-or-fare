@@ -1,15 +1,7 @@
-# from flask import Flask, request, jsonify
-# import folium
-# import branca
-# from folium import GeoJson, GeoJsonTooltip
 import pandas as pd
-from shapely import from_wkt
 import html
 from dash import html
-# import numpy as np
-import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
-import altair as alt
 import dash_vega_components as dvc
 from .visualization.transform import  get_text
 from .visualization.altair_charts import(

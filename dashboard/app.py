@@ -368,7 +368,7 @@ map_display = html.Div([
 
 ], style={
     "display": "flex",
-    "flexDirection": "row",     # ← left column and right column side by side
+    "flexDirection": "row",    
     "height": "calc(100vh - 16px)",
     "overflow": "hidden",
     "overscrollBehavior": "none"
@@ -401,7 +401,6 @@ def update_graph(row_chosen):
 
 
 # Final layout
-## App Layout ###
 tab_selected_style = {
     'fontWeight': 'bold'
 }

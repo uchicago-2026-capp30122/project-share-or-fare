@@ -1,32 +1,14 @@
-# from flask import Flask, request, jsonify
-# import folium
-# import branca
-# from folium import GeoJson, GeoJsonTooltip
 import pandas as pd
-from shapely import from_wkt
 import html
 from dash import html, dcc
-# import numpy as np
-import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import altair as alt
 import dash_vega_components as dvc
 from .visualization.transform import log_transform_time, get_text
 from .visualization.altair_charts import(
-    weighted_avg,
-    # most_pickups,
-    distance_vs_demand_quadrants,
-    # corridor_bar_chart,
-    transit_penalty_heatmap,
-    rideshare_count_heatmap,
-    corridor_highest_price,
-    corridor_lowest_price,
-    distribution_of_rides,
     distribution_of_ratio,
     transit_rideshare_comparison,
-    rides_by_month
 )
-
 
 
 df = pd.read_csv('./data/rideshare_transit_data.csv')
