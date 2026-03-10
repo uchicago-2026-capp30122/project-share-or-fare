@@ -3,8 +3,6 @@ import altair as alt
 from .transform import dataset_sample, weighted_median
 
 
-
-
 def weighted_avg(group, value_col, weight_col):
     """
     Helper function for prep_data_for_map
@@ -39,14 +37,6 @@ def distance_vs_demand_quadrants(df):
     Distance (miles) vs Rideshare Demand by Neighborhood
     Scatter Plot with Quadrants
     """
-    # neighborhood_stats = df.groupby(["Pickup Neighborhood"]).apply(
-    #     lambda g: pd.Series({
-    #         "distance_wavg": weighted_avg(g, "distance_wavg", "Count"),
-    #         'Count': g['Count'].sum()
-    #         })
-    #         ).sort_values(
-    #             by="Count",
-    #             ascending=False).reset_index()
 
     neighborhood_stats = df.sort_values(
         by="distance_wavg",
@@ -221,42 +211,8 @@ def corridor_lowest_price(df):
     return price_chart
 
 
-### Analysis 5:
-## Top Most and Least Connected Travel Corridors in terms of Number of Trips (Volume)
-# Pickup and Dropoff Neighborhood Connectivity Heatmap
 
-# df = df[df["Pickup Neighborhood"] != df["Dropoff Neighborhood"]]
-
-# flows = df.groupby(["Pickup Neighborhood","Dropoff Neighborhood"], as_index=False)["Count"].sum()
-
-# most_connected = flows.nlargest(100,"Count").sort_values("Count", ascending=False)
-# least_connected = flows[flows["Count"] == 1].head(100)
-
-# most_connected["Group"] = "Most Connected"
-# least_connected["Group"] = "Least Connected"
-
-# corridors = pd.concat([most_connected, least_connected], ignore_index=True)
-
-# dropdown = alt.binding_select(options=["Most Connected","Least Connected"], name="Show: ")
-# selection = alt.selection_point(fields=["Group"], bind=dropdown, value="Most Connected")
-
-
-# chart5 = alt.Chart(corridors).mark_rect().encode(
-#     x="Pickup Neighborhood:N",
-#     y="Dropoff Neighborhood:N",
-#     color=alt.Color("Group:N",
-#         scale=alt.Scale(domain=["Most Connected","Least Connected"],
-#                         range=["green","red"]),
-#         title="Corridor Type"
-#     ),
-#     tooltip=["Pickup Neighborhood","Dropoff Neighborhood","Count"]
-# ).transform_filter(selection).add_params(selection).properties(
-#     title="Most vs Least Connected Neighborhood Corridors"
-# )
-
-# chart5
-
-
+##### Trip level analysis #####
 df = pd.read_csv("./data/rideshare_transit_data.csv")
 
 def distribution_of_rides(
@@ -310,11 +266,6 @@ def distribution_of_rides(
             ),
         ).configure_axis(
             grid=False
-        # ).configure_axisY(
-        #     titleAngle=0,
-        #     titleAlign="right",
-        #     titleY=-12,
-        #     titleX=0,
         ).properties(
             title=f'Distribution of {dropdown_options[row_chosen]}'
         )
@@ -358,12 +309,7 @@ def transit_rideshare_comparison(df: pd.DataFrame):
         )
     ).configure_axis(
         grid=False
-    )#.configure_axisY(
-    #     titleAngle=0,
-    #     titleAlign="right",
-    #     titleY=-12,
-    #     titleX=0,
-    # )
+    )
     
     return chart
 
@@ -409,12 +355,7 @@ def distribution_of_ratio(df:pd.DataFrame):
         )
     ).configure_axis(
         grid=False
-    )#.configure_axisY(
-    #     titleAngle=0,
-    #     titleAlign="right",
-    #     titleY=-12,
-    #     titleX=0,
-    # )
+    )
 
     return chart
 
@@ -461,12 +402,7 @@ def rides_by_month(df: pd.DataFrame):
             ),
         ).configure_axis(
             grid=False
-        )#.configure_axisY(
-        #     titleAngle=0,
-        #     titleAlign="right",
-        #     titleY=-12,
-        #     titleX=0,
-        # )
+        )
     )
     
     return chart

@@ -1,32 +1,28 @@
 from flask import Flask, request, jsonify
 import folium
-import branca
 from folium import GeoJson, GeoJsonTooltip
 import pandas as pd
 from shapely import from_wkt
 import html
 from dash import Dash, html, dcc, callback, Output, Input
 import numpy as np
-import dash_ag_grid as dag
+# import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
-import altair as alt
-import dash_vega_components as dvc
-from dashboard.visualization.transform import log_transform_time, get_text
-from dashboard.visualization.altair_charts import(
+# import altair as alt
+# import dash_vega_components as dvc
+from .visualization.transform import log_transform_time, get_text
+from .visualization.altair_charts import(
     weighted_avg,
-    # most_pickups,
-    distance_vs_demand_quadrants,
-    # corridor_bar_chart,
-    transit_penalty_heatmap,
-    rideshare_count_heatmap,
-    corridor_highest_price,
-    corridor_lowest_price,
     distribution_of_rides,
-    distribution_of_ratio,
-    transit_rideshare_comparison,
-    rides_by_month
 )
-from js import JS_CODE, CSS_STYLING
+
+# Import static Components
+from .js import JS_CODE, CSS_STYLING
+from .intro_tab import exploratory
+from .tab1_transit_rideshare import ratio
+from .tab2_neighborhood_analysis import neighborhood_tab
+from .appendix import appendix
+from .discussion import discussion
 
 
 ################################################################################
@@ -37,6 +33,11 @@ from js import JS_CODE, CSS_STYLING
 # `ctrl c` to stop running the app.
 #
 ################################################################################
+
+
+#### Interactive Map (Tab 3) ###
+server = Flask(__name__)
+app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.LUX])
 
 
 neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
@@ -54,16 +55,12 @@ pickup_neighborhoods = neighborhood_route_data.groupby(["Pickup Neighborhood"]).
     })
     ).reset_index()
 
-server = Flask(__name__)
-app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.LUX])
-
 
 current_neighborhood = ""
 
-
 def standardize(x):
     """
-    Standardizes value, used as weighting function for opacity
+    Standardizes value, used as weighting function for line weight
     """
     return (x-x.min())/(x.max()-x.min())
 
@@ -84,7 +81,7 @@ def filter_neighborhood(neighborhood):
         filtered_neighborhood_routes["Count"]/filtered_neighborhood_routes["Count"].sum())*100, 2)
     
     # Add opacity based on percentage of rides
-    filtered_neighborhood_routes["opacity"] = standardize(filtered_neighborhood_routes["perc_rides"])
+    filtered_neighborhood_routes["line_weight"] = standardize(filtered_neighborhood_routes["perc_rides"])
 
     return filtered_neighborhood_routes
 
@@ -125,7 +122,7 @@ def neighborhood():
         dropoff_poly = from_wkt(row["Dropoff Neighborhood Polygon"])
         features.append({
             "type": "Feature",
-            "properties": {"line_weight": (row["opacity"]*5)+1,
+            "properties": {"line_weight": (row["line_weight"]*5)+1,
                            "opacity": 1,
                            "color": row["transitPenaltyColor"],
                            "from": row["Pickup Neighborhood"],
@@ -189,7 +186,6 @@ def make_map():
     ).add_to(m)
 
 
-
     m.get_root().html.add_child(folium.Element(CSS_STYLING))
     m.get_root().html.add_child(folium.Element(JS_CODE))
     html_str = m._repr_html_()
@@ -251,7 +247,6 @@ def update_panel(n):
 
 **Average Trip Cost:** \n ${avg_tripCost}
 """)
-
 
 map_display = html.Div([
 
@@ -381,7 +376,8 @@ map_display = html.Div([
 
 
 ################################################################################
-# Data Processing
+# Intro tab: Interactive Dropdown
+###############################################################################
 df = pd.read_csv('./data/rideshare_transit_data.csv')
 df = log_transform_time(df)
 
@@ -393,340 +389,18 @@ dropdown_options={
     "Float Trip Miles": "Rideshare Trip Distance (Miles)"
 }
 
-# Load app text
-data_text = get_text('dashboard/text/data.txt')
-intro_text = get_text('dashboard/text/intro.txt')
-ratio_intro_text = get_text('dashboard/text/ratio_intro.txt')
-transit_penalty_text = get_text('dashboard/text/transit_penalty.txt')
-discussion_text = get_text('dashboard/text/discussion.txt')
-sampling_text = get_text('dashboard/text/sampling.txt')
-graph_sampling_text = get_text('dashboard/text/graph_sampling.txt')
-seasonal_text = get_text('dashboard/text/seasonal.txt')
 
-
-# Altair Histogram
-alt_hist = dvc.Vega(
-    id="altair-hist",
-    opt={"renderer": "svg", "actions": False},
-    spec={},
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-),
-
-hist1 = [
-    html.Hr(),
-    html.H3(children='A Brief Overview of Our Data'),
-    html.Div(children=data_text,
-             style={'white-space': 'pre-wrap'}),
-    html.Div(children="There were 93,510,249 rideshare rides in Chicago in 2025. Our random sample contains 15,341,421 rides."),
-    html.Hr(),
-    html.Hr(),
-    html.H3("Distribution of Rideshare Data"),
-    dbc.Col(children=[
-        dbc.Row(dbc.Col(children=[
-            html.Hr(),
-            html.Div("Please select what metric you would like to see the distribution of:"),
-            dcc.Dropdown(
-            options=dropdown_options,
-            value='rideshareTime',
-            id='xaxis-column'
-            )
-        ], width={"size": 6, "offset": 3})),
-        dbc.Row([
-            html.Hr(),
-            html.Div(alt_hist)
-        ]),
-    ],
-    )
-]
-
-## Visualizations ##
-alt.data_transformers.disable_max_rows()
-
-# Rideshare to Transit Time Comparison
-ride_by_transit = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=transit_rideshare_comparison(df).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
+# Add controls to build the interaction with dropdown options in intro tab
+@callback(
+    Output(component_id='altair-hist', component_property='spec'),
+    Input(component_id='xaxis-column', component_property='value')
 )
-
-distribution_of_ratio_chart = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=distribution_of_ratio(df).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-)
-
-# Neighborhood Analysis Charts
-
-# most_pickups_analysis = dvc.Vega(
-#     opt={"renderer": "svg", "actions": False},
-#     spec=most_pickups(pickup_neighborhoods).to_dict(),
-#     style={"display": "flex", "justifyContent": "center", "width": "100%"}
-# )
-
-distance_vs_demand_quadrants_analysis = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=distance_vs_demand_quadrants(pickup_neighborhoods).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-)
-
-# corridor_bar_chart_analysis = dvc.Vega(
-#     opt={"renderer": "svg", "actions": False},
-#     spec=corridor_bar_chart(pickup_neighborhoods).to_dict(),
-#     style={"display": "flex", "justifyContent": "center", "width": "100%"}
-# )
-
-transit_penalty_heatmap_analysis = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=transit_penalty_heatmap(pickup_neighborhoods, neighborhood_route_data).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-)
-
-rideshare_count_heatmap_analysis = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=rideshare_count_heatmap(pickup_neighborhoods, neighborhood_route_data).to_dict(),
-    style={"display": "flex", "justifyContent": "center"}
-)
-
-corridor_highest_price_analysis = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=corridor_highest_price(neighborhood_route_data).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-)
-
-corridor_lowest_price_analysis = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=corridor_lowest_price(neighborhood_route_data).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-)
-
-# Seasonality Charts
-rides_by_month_chart = dvc.Vega(
-    opt={"renderer": "svg", "actions": False},
-    spec=rides_by_month(df).to_dict(),
-    style={"display": "flex", "justifyContent": "center", "width": "100%"}
-)
+def update_graph(row_chosen):
+    chart = distribution_of_rides(df, row_chosen, dropdown_options)
+    return chart.to_dict()
 
 
-# Page components
-intro = [
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    html.H1(children='Share or Fare?', style={'fontSize': '48px'}),
-    html.Div(
-        children='A Comparison of Ride Share Usage and Transit Routes in Chicago',
-        style={'fontSize': '32px'}),
-    html.Hr(),
-    html.H5(
-        children='Molly Long, Waleed Shahzad, Sabrina Wang, Sarah Zebar',   style={'color': 'grey'}
-    ),
-    html.H5(
-        children='CAPP 30122 Winter 2026',
-        style={'color': 'grey'}
-    ),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    html.Div(children=intro_text, 
-             style={'white-space': 'pre-wrap'})
-]
-
-exploratory = [html.Div([
-    dbc.Row(dbc.Col(
-        children=[
-            dbc.Stack([
-                dbc.Row(intro),
-                dbc.Row(hist1),
-            ], gap = 3),
-            html.Hr(),
-            html.Hr()
-        ],
-        width={"size": 10, "offset": 1},
-    )), 
-])]
-
-ratio = [
-    dbc.Col(children=[
-        html.Hr(),
-        html.H3("Comparing Public Transportation Trip Time to Rideshare Trip Time"),
-        html.Hr(),
-        html.Hr(),
-        html.Div([ratio_intro_text]),
-        html.Hr(),
-        dbc.Row([
-            html.H5(
-                "Comparison of Public Tranportation and Rideshare Trip times",
-                style={'textAlign': 'center'}
-            ),
-            html.Div([ride_by_transit]),
-        ], justify="center", align="center"),
-        html.Hr(),
-        html.Hr(),
-        html.Div(dcc.Markdown(transit_penalty_text)),
-        html.Hr(),
-        dbc.Row([
-            html.H5(
-                "Distribution of Ratio of Transit to Rideshare Time",
-                style={'textAlign': 'center'}
-            ),
-            html.Div([distribution_of_ratio_chart]),
-        ], justify="center", align="center"),
-        html.Hr(),
-        html.Hr(),
-    ],
-    width={"size": 10, "offset": 1}
-    )
-]
-
-## Neighborhood Analysis Page Format
-# Load captions
-transit_penalty_heatmap_text = get_text('dashboard/text/transit_penalty_heatmap.txt')
-distance_vs_demand_quadrants_text = get_text('dashboard/text/distance_vs_demand_quadrants.txt')
-corridor_highest_price_text = get_text('dashboard/text/corridor_highest_price.txt')
-corridor_lowest_price_text = get_text('dashboard/text/corridor_lowest_price.txt')
-
-
-graph1 = dbc.Card([
-    dbc.CardHeader("Most Frequented Neighborhood Corridors"),
-    dbc.CardBody([
-        html.Div([rideshare_count_heatmap_analysis]),
-        html.P("This is some text", className="card-text")
-    ])
-])
-
-
-graph2 = dbc.Card([
-    dbc.CardHeader("Transit Penalty for Most Frequented Neighborhood Corridors (excl. airports)"),
-    dbc.CardBody([
-        html.Div([transit_penalty_heatmap_analysis]),
-        html.P(transit_penalty_heatmap_text, className="card-text")
-    ])
-])
-
-
-graph3 = dbc.Card([
-    dbc.CardHeader("Trip Distance vs. Demand"),
-    dbc.CardBody([
-        html.Div([distance_vs_demand_quadrants_analysis])
-    ])
-])
-
-text3 = dbc.Card([
-    dbc.CardBody([
-        html.P(distance_vs_demand_quadrants_text, className="card-text")
-    ])
-])
-
-graph4 = dbc.Card([
-    dbc.CardHeader("Top 20 Highest Priced Neighborhood Corridors"),
-    dbc.CardBody([
-        html.Div([corridor_highest_price_analysis]),
-        html.P(corridor_highest_price_text, className="card-text")
-    ])
-])
-
-graph5 = dbc.Card([
-    dbc.CardHeader("Top 20 Lowest Priced Neighborhood Corridors"),
-    dbc.CardBody([
-        html.Div([corridor_lowest_price_analysis]),
-        html.P(corridor_lowest_price_text, className="card-text")
-    ])
-])
-
-
-row_1 = dbc.Row(
-    [
-        dbc.Col(graph1),
-        dbc.Col(graph2),
-    ],
-    className="mb-4",
-)
-
-row_2 = dbc.Row(
-    [
-        dbc.Col(graph4),
-        dbc.Col(graph5),
-    ],
-    className="mb-4",
-)
-
-row_3 = dbc.Row(
-    [
-        dbc.Col(graph3),
-        dbc.Col(text3)
-    ],
-    className="mb-4",
-)
-
-neighborhood = html.Div([row_1, row_2, row_3])
-
-
-discussion = [dbc.Col(children=[
-    html.Hr(),
-    html.H3("Discussion of Results"),
-    html.Hr(),
-    html.Div(
-        children=discussion_text,
-        style={"white-space": "pre-wrap"}
-    )
-], width={"size": 10, "offset": 1})]
-
-
-html.Div(
-    children=sampling_text,
-    style={"white-space": "pre-wrap"}
-)
-
-graph_sampling = [
-    html.Hr(),
-    html.Hr(),
-    html.H3("Random Subset to Reduce Load on Graphs"),
-    html.Hr(),
-    html.Div([graph_sampling_text]),
-]
-
-
-seasonality = [
-    html.Hr(),
-    html.Hr(),
-    html.H3("Future Extensions: Seasonality Trends in Rideshare Usage"),
-    html.Hr(),
-    html.Div([seasonal_text]),
-    html.Hr(),
-    dbc.Row([
-        html.H5(
-            "Average Rides per Day by Month",
-            style={'textAlign': 'center'}
-        ),
-        html.Div([rides_by_month_chart]),
-    ]),
-    html.Hr(),
-    html.Hr(),
-]
-
-appendix = [html.Div([
-    dbc.Row(dbc.Col(
-        children=[
-            dbc.Stack([
-                dbc.Row([
-                    html.Hr(),
-                    html.Hr(),
-                    html.H3("Sampling Methodology"),
-                    html.Hr(),
-                    html.Div(
-                        children=sampling_text,
-                        style={"white-space": "pre-wrap"}
-                    ),
-                    html.Hr()
-                ]),
-                dbc.Row(graph_sampling),
-                dbc.Row(seasonality),
-            ], 
-            gap = 3)],
-        width={"size": 10, "offset": 1},
-    )), 
-])]
-
+# Final layout
 ## App Layout ###
 tab_selected_style = {
     'fontWeight': 'bold'
@@ -749,7 +423,7 @@ app.layout = dcc.Tabs([
         label='2. Neighborhood Level Analysis',
         value='neighborhood',
         selected_style=tab_selected_style,
-        children=neighborhood,
+        children=neighborhood_tab,
     ),
     dcc.Tab(
         label='3. Map of Rides',
@@ -772,14 +446,7 @@ app.layout = dcc.Tabs([
     ),
 ])
 
-# Add controls to build the interaction
-@callback(
-    Output(component_id='altair-hist', component_property='spec'),
-    Input(component_id='xaxis-column', component_property='value')
-)
-def update_graph(row_chosen):
-    chart = distribution_of_rides(df, row_chosen, dropdown_options)
-    return chart.to_dict()
+
 
 # Run the app
 if __name__ == '__main__':
