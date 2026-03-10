@@ -1,3 +1,3 @@
 This chart shows the neighborhood corridors with the highest average rideshare fares. Corridors are created by pairing pickup and drop-off neighborhoods, removing intra-neighborhood travel. To avoid outliers, corridors with very low trip counts (≤20) are filtered out. The data is then ranked by taking weighted average of the trip cost, and the top 20 most expensive corridors are displayed.
 
-The chart highlights which commonly traveled routes have the highest rideshare costs, often reflecting longer distances, high-demand routes, or areas with limited alternative transportation options.
+The chart highlights which commonly traveled routes have the highest rideshare costs, generally reflecting longer distances.

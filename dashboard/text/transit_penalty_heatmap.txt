@@ -1,0 +1,3 @@
+This heatmap shows transit connectivity between major pickup and dropoff neighborhoods. The analysis focuses on the top 20 pickup neighborhoods by ride count, excluding extreme outliers like O’Hare. Each cell represents a pickup–dropoff pair, and the color encodes the average transit penalty (transit travel time relative to rideshare).
+
+Lower penalty values indicate similar travel times between transit and rideshare (better connectivity), while higher values show corridors where transit takes significantly longer. The heatmap highlights which neighborhood pairs have strong transit options and where rideshare provides a faster alternative.

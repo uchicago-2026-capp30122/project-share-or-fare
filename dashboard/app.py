@@ -11,8 +11,8 @@ import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import altair as alt
 import dash_vega_components as dvc
-from dash.visualization.transform import log_transform_time, get_text
-from visualization.altair_charts import(
+from dashboard.visualization.transform import log_transform_time, get_text
+from dashboard.visualization.altair_charts import(
     weighted_avg,
     most_pickups,
     distance_vs_demand_quadrants,
@@ -512,15 +512,15 @@ dropdown_options={
     "Float Trip Miles": "Rideshare Trip Distance (Miles)"
 }
 
-# Load all text
-data_text = get_text('dash/text/data.txt')
-intro_text = get_text('dash/text/intro.txt')
-ratio_intro_text = get_text('dash/text/ratio_intro.txt')
-transit_penalty_text = get_text('dash/text/transit_penalty.txt')
-discussion_text = get_text('dash/text/discussion.txt')
-sampling_text = get_text('dash/text/sampling.txt')
-graph_sampling_text = get_text('dash/text/graph_sampling.txt')
-seasonal_text = get_text('dash/text/seasonal.txt')
+# Load app text
+data_text = get_text('dashboard/text/data.txt')
+intro_text = get_text('dashboard/text/intro.txt')
+ratio_intro_text = get_text('dashboard/text/ratio_intro.txt')
+transit_penalty_text = get_text('dashboard/text/transit_penalty.txt')
+discussion_text = get_text('dashboard/text/discussion.txt')
+sampling_text = get_text('dashboard/text/sampling.txt')
+graph_sampling_text = get_text('dashboard/text/graph_sampling.txt')
+seasonal_text = get_text('dashboard/text/seasonal.txt')
 
 
 # Altair Histogram
@@ -575,6 +575,7 @@ distribution_of_ratio_chart = dvc.Vega(
 )
 
 # Neighborhood Analysis Charts
+
 # most_pickups_analysis = dvc.Vega(
 #     opt={"renderer": "svg", "actions": False},
 #     spec=most_pickups(pickup_neighborhoods).to_dict(),
@@ -697,6 +698,11 @@ ratio = [
 ]
 
 ## Neighborhood Analysis Page Format
+# Load captions
+transit_penalty_heatmap_text = get_text('dashboard/text/transit_penalty_heatmap.txt')
+distance_vs_demand_quadrants_text = get_text('dashboard/text/distance_vs_demand_quadrants.txt')
+corridor_highest_price_text = get_text('dashboard/text/corridor_highest_price.txt')
+corridor_lowest_price_text = get_text('dashboard/text/corridor_lowest_price.txt')
 
 
 graph1 = dbc.Card([
@@ -712,23 +718,21 @@ graph2 = dbc.Card([
     dbc.CardHeader("Transit Penalty for Most Frequented Neighborhood Corridors (excl. airports)"),
     dbc.CardBody([
         html.Div([transit_penalty_heatmap_analysis]),
-        html.P("This is some text", className="card-text")
+        html.P(transit_penalty_heatmap_text, className="card-text")
     ])
 ])
-
 
 
 graph3 = dbc.Card([
     dbc.CardHeader("Trip Distance vs. Demand"),
     dbc.CardBody([
-        html.Div([distance_vs_demand_quadrants_analysis]),
-        html.P("This is some text", className="card-text")
+        html.Div([distance_vs_demand_quadrants_analysis])
     ])
 ])
 
 text3 = dbc.Card([
     dbc.CardBody([
-        html.P("This is some text", className="card-text")
+        html.P(distance_vs_demand_quadrants_text, className="card-text")
     ])
 ])
 
@@ -736,7 +740,7 @@ graph4 = dbc.Card([
     dbc.CardHeader("Top 20 Highest Priced Neighborhood Corridors"),
     dbc.CardBody([
         html.Div([corridor_highest_price_analysis]),
-        html.P("This is some text", className="card-text")
+        html.P(corridor_highest_price_text, className="card-text")
     ])
 ])
 
@@ -744,7 +748,7 @@ graph5 = dbc.Card([
     dbc.CardHeader("Top 20 Lowest Priced Neighborhood Corridors"),
     dbc.CardBody([
         html.Div([corridor_lowest_price_analysis]),
-        html.P("This is some text", className="card-text")
+        html.P(corridor_lowest_price_text, className="card-text")
     ])
 ])
 
