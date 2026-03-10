@@ -12,6 +12,7 @@ To run the project dashboard:
 
 ## Preview 
 ![App screenshot featuring common rideshare trips that start in Hyde Park](app_preview.png)
+[Project Demo](https://youtu.be/J_djvWmZGAU)
 
 ## Data Sources
 City of Chicago. "Boundaries - Neighborhoods." Chicago Data Portal. Accessed March 1, 2026. https://data.cityofchicago.org/Facilities-Geographic-Boundaries/Boundaries-Neighborhoods/bbvz-uum9.  
