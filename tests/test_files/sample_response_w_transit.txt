@@ -1,0 +1,123 @@
+{
+  "routes": [
+    {
+      "legs": [
+        {
+          "steps": [
+            {
+              "distanceMeters": 76,
+              "staticDuration": "42s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 12,
+              "staticDuration": "157s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 9,
+              "staticDuration": "65s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 3,
+              "staticDuration": "10",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 1000,
+              "staticDuration": "280s",
+              "transitDetails": {
+                "stopDetails": {
+                  "arrivalStop": {
+                    "name": "Stop",
+                    "location": {
+                      "latLng": {
+                        "latitude": 41.903918999999995,
+                        "longitude": -87.631408999999991
+                      }
+                    }
+                  },
+                  "arrivalTime": "",
+                  "departureStop": {
+                    "name": "Stop",
+                    "location": {
+                      "latLng": {
+                        "latitude": 41.891666,
+                        "longitude": -87.62802099999999
+                      }
+                    }
+                  },
+                  "departureTime": ""
+                },
+                "localizedValues": {
+                  "arrivalTime": {
+                    "time": {
+                      "text": "8:11 PM"
+                    },
+                    "timeZone": "America/Chicago"
+                  },
+                  "departureTime": {
+                    "time": {
+                      "text": "8:07 PM"
+                    },
+                    "timeZone": "America/Chicago"
+                  }
+                },
+                "headsign": "Howard",
+                "transitLine": {
+                  "agencies": [
+                    {
+                      "name": "Agency",
+                      "phoneNumber": "00000000",
+                      "uri": "test.com"
+                    }
+                  ],
+                  "name": "Line",
+                  "uri": "test.com",
+                  "color": "#c60c30",
+                  "textColor": "#ffffff",
+                  "vehicle": {
+                    "name": {
+                      "text": "Subway"
+                    },
+                    "type": "SUBWAY"
+                  }
+                },
+                "stopCount": 3
+              },
+              "travelMode": "TRANSIT"
+            },
+            {
+              "distanceMeters": 8,
+              "staticDuration": "79s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 4,
+              "staticDuration": "4s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 208,
+              "staticDuration": "167s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 28,
+              "staticDuration": "23s",
+              "travelMode": "WALK"
+            },
+            {
+              "distanceMeters": 24,
+              "staticDuration": "21s",
+              "travelMode": "WALK"
+            }
+          ]
+        }
+      ],
+      "distanceMeters": 2220,
+      "duration": "908s"
+    }
+  ]
+}

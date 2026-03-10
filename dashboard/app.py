@@ -6,11 +6,8 @@ from shapely import from_wkt
 import html
 from dash import Dash, html, dcc, callback, Output, Input
 import numpy as np
-# import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
-# import altair as alt
-# import dash_vega_components as dvc
-from .visualization.transform import log_transform_time, get_text
+from .visualization.transform import log_transform_time
 from .visualization.altair_charts import(
     weighted_avg,
     distribution_of_rides,
