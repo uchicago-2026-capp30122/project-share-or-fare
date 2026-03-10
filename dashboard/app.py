@@ -31,6 +31,8 @@ from .discussion import discussion
 #
 ################################################################################
 
+### This file handles the interactive components of the app, and combines
+### with the static components
 
 #### Interactive Map (Tab 3) ###
 server = Flask(__name__)
