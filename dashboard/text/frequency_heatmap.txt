@@ -1,0 +1,1 @@
+This heatmap shows the most common transit corridors - that is, the most common start neighborhood and stop neighborhood combinations. Each cell represents a pickup–dropoff pair, and the color encodes the number of rides in our sample. The most common trips start and stop in or near the Loop or O'Hare.
