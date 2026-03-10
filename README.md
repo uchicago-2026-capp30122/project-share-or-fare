@@ -8,7 +8,7 @@ We analyzed Chicago rideshare trips to understand when, where, and even why resi
 To run the project dashboard:  
 *unzip* `neighborhood_route_data.csv.gz`  
 
-*run* `uv run dash/app.py -m`
+*run* `uv run -m dashboard.app`
 
 ## Preview 
 ![App screenshot featuring common rideshare trips that start in Hyde Park](app_preview.png)

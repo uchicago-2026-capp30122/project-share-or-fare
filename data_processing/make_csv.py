@@ -286,7 +286,7 @@ def sample_and_split(data: pd.DataFrame, size: int):
     )
 
     for i, teammate in enumerate(TEAMMATES):
-        teammate = api[size * i : size * (i+1)]
-        teammate.to_csv(f"./data/{teammate}_{size / 1000}k.csv", index=False)
+        selected_data = api[size * i : size * (i+1)]
+        selected_data.to_csv(f"./data/{teammate}_{size / 1000}k.csv", index=False)
 
     print(f"Succesfully created files of size {size}")

@@ -25,7 +25,7 @@ from .discussion import discussion
 ################################################################################
 #
 # To run the dash app, from base project-share-or-fare directory run
-#   `uv run dash/app.py -m`
+#   `uv run -m dashboard.app`
 #
 # `ctrl c` to stop running the app.
 #
