@@ -15,7 +15,7 @@ plt.title("Trip Duration Distribution")
 plt.xlabel("Average Trip Minutes")
 plt.ylabel("Frequency")
 plt.xticks(range(0, int(df["Average Trip Minutes"].max()) + 5, 5))
-plt.show() 
+plt.show()
 
 
 # Histogram 2: Trip distance

@@ -26,7 +26,7 @@ def clean(filename: str) -> pd.DataFrame:
 
     Author: Molly
     """
-    df = pd.read_csv(filename, dtype={'Trip Miles': float})
+    df = pd.read_csv(filename, dtype={"Trip Miles": float})
 
     # Select relevant columns
     data = df[
@@ -107,14 +107,14 @@ def group_rides(data: pd.DataFrame) -> pd.DataFrame:
     """
     Grouping by Unique API Call
 
-    We have a limited number of API calls and want to use them efficiently. 
-    Rather than making repeated calls that return identical results, we will 
+    We have a limited number of API calls and want to use them efficiently.
+    Rather than making repeated calls that return identical results, we will
     consolidate requests whenever possible.
 
-    Under our working assumptions--including that CTA schedules remain constant 
-    over the sample period (and match current schedule), that we ignore traffic 
-    variation, and that all weekdays are treated as equivalent—we will make one 
-    API call per unique set of parameters and apply the returned transit 
+    Under our working assumptions--including that CTA schedules remain constant
+    over the sample period (and match current schedule), that we ignore traffic
+    variation, and that all weekdays are treated as equivalent—we will make one
+    API call per unique set of parameters and apply the returned transit
     information to all rideshare trips that share those parameters.
 
     Specifically, if multiple rideshare trips share the same:
@@ -124,12 +124,12 @@ def group_rides(data: pd.DataFrame) -> pd.DataFrame:
     then a single API call will suffice for all of them.
 
     To implement this, we will:
-    1. Create a dataframe that counts the number of trips in each group 
+    1. Create a dataframe that counts the number of trips in each group
     defined by the criteria above.
     2. Take a weighted random sample from this grouped dataframe.
     3. This is the sample that we will pass to the API program.
 
-    This approach allows us to maximize sample size from the rideshare dataset 
+    This approach allows us to maximize sample size from the rideshare dataset
     (which is population data) while minimizing API usage.
 
     Author: Molly
@@ -183,58 +183,68 @@ def write_month_ride_groups(data: pd.DataFrame):
 
     Parameters:
         data: A pandas dataframe of cleaned but not grouped ride data
-    
+
     Authors: Sabrina, Molly
     """
     # `data` as is defined under the grouping data section
     # Trip length as an int
-    data["Int Trip Seconds"] = data['Trip Seconds'].str.replace(",", "").astype(int)
+    data["Int Trip Seconds"] = data["Trip Seconds"].str.replace(",", "").astype(int)
 
     # Turn all money into floats
-    col_name = [
-        "Fare", "Tip", "Additional Charges", "Trip Total"
-    ]
+    col_name = ["Fare", "Tip", "Additional Charges", "Trip Total"]
     for col in col_name:
         data[f"Float {col}"] = data[col].str[1:].astype(float)
 
     # Trip miles as a float
-    data["Float Trip Miles"] = data['Trip Miles'].astype(float)
+    data["Float Trip Miles"] = data["Trip Miles"].astype(float)
 
     # Convert time variables to Central time
-    data["Trip Start Timestamp"] = data["Trip Start Timestamp"].dt.tz_convert("America/Chicago")
-    data["Trip End Timestamp"] = data["Trip End Timestamp"].dt.tz_convert("America/Chicago")
+    data["Trip Start Timestamp"] = data["Trip Start Timestamp"].dt.tz_convert(
+        "America/Chicago"
+    )
+    data["Trip End Timestamp"] = data["Trip End Timestamp"].dt.tz_convert(
+        "America/Chicago"
+    )
 
     # Recreate time variables in proper time zone
     data["month"] = data["Trip Start Timestamp"].dt.month
     data["start_hour"] = data["Trip Start Timestamp"].dt.hour
 
-    ride_groups = data.groupby(['group_id', 'month']).aggregate({
-        'Int Trip Seconds': 'mean',
-        'Float Trip Miles': 'mean',
-        "Float Fare": "mean",
-        "Float Tip": "mean",
-        "Float Additional Charges": "mean",
-        "Float Trip Total": "mean",
-        "Pickup Census Tract": "first",
-        "Dropoff Census Tract": "first",
-        "Pickup Centroid Latitude": "first",
-        "Pickup Centroid Longitude": "first",
-        "Dropoff Centroid Latitude": "first",
-        "Dropoff Centroid Longitude": "first",
-        "start_hour": "first",
-        "day_type": "first",
-        "Trip ID": "count"
-    }).reset_index()
+    ride_groups = (
+        data.groupby(["group_id", "month"])
+        .aggregate(
+            {
+                "Int Trip Seconds": "mean",
+                "Float Trip Miles": "mean",
+                "Float Fare": "mean",
+                "Float Tip": "mean",
+                "Float Additional Charges": "mean",
+                "Float Trip Total": "mean",
+                "Pickup Census Tract": "first",
+                "Dropoff Census Tract": "first",
+                "Pickup Centroid Latitude": "first",
+                "Pickup Centroid Longitude": "first",
+                "Dropoff Centroid Latitude": "first",
+                "Dropoff Centroid Longitude": "first",
+                "start_hour": "first",
+                "day_type": "first",
+                "Trip ID": "count",
+            }
+        )
+        .reset_index()
+    )
 
-    ride_groups = ride_groups.rename(columns={
-        'Int Trip Seconds': 'Average Trip Seconds',
-        'Trip Miles': 'Average Miles',
-        "Float Fare": "Average Fare",
-        "Float Tip": "Average Tip",
-        "Float Additional Charges": "Average Additional Charges",
-        "Float Trip Total": "Average Trip Total",
-        "Trip ID": "Count"
-    })
+    ride_groups = ride_groups.rename(
+        columns={
+            "Int Trip Seconds": "Average Trip Seconds",
+            "Trip Miles": "Average Miles",
+            "Float Fare": "Average Fare",
+            "Float Tip": "Average Tip",
+            "Float Additional Charges": "Average Additional Charges",
+            "Float Trip Total": "Average Trip Total",
+            "Trip ID": "Count",
+        }
+    )
 
     print(f"Agregated data has {len(ride_groups)} rows")
     ride_groups.to_csv("../data/ride_groups.csv", index=False)
@@ -243,7 +253,7 @@ def write_month_ride_groups(data: pd.DataFrame):
 
 def format_for_api(data: pd.DataFrame, unique_calls: pd.DataFrame) -> pd.DataFrame:
     """
-    Convert day types into specific representative dates, with separate year, 
+    Convert day types into specific representative dates, with separate year,
     month, and day columns with data as strings.
 
     Parameters:
@@ -286,7 +296,7 @@ def sample_and_split(data: pd.DataFrame, size: int):
     )
 
     for i, teammate in enumerate(TEAMMATES):
-        selected_data = api[size * i : size * (i+1)]
+        selected_data = api[size * i : size * (i + 1)]
         selected_data.to_csv(f"./data/{teammate}_{size / 1000}k.csv", index=False)
 
     print(f"Succesfully created files of size {size}")

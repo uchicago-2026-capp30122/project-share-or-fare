@@ -8,14 +8,15 @@ PICKUP_LONG = "Pickup Centroid Longitude"
 DROPOFF_LAT = "Dropoff Centroid Latitude"
 DROPOFF_LONG = "Dropoff Centroid Longitude"
 
-def join_api_csv(rideshare_data_name, large = False) -> pd.DataFrame:
+
+def join_api_csv(rideshare_data_name, large=False) -> pd.DataFrame:
     """
     Join the output csv from the api call back to the original csv dataset on group_id
 
     Parameters:
         rideshare_data_name: A string, the name of the original rideshare data
         api_response_name: A string, the name of the api response file
-    
+
     Returns: A pandas dataframe with the merged rideshare and transit data
 
     Author: Sabrina
@@ -28,7 +29,7 @@ def join_api_csv(rideshare_data_name, large = False) -> pd.DataFrame:
         "molly_500_api_response",
         "sabrina_500_api_response",
         "sarah_500_api_response",
-        "waleed_500_api_response"
+        "waleed_500_api_response",
     ]
 
     if large:
@@ -36,14 +37,14 @@ def join_api_csv(rideshare_data_name, large = False) -> pd.DataFrame:
             "molly_58k_api_response",
             "sabrina_58k_api_response",
             "sarah_58k_api_response",
-            "waleed_58k_api_response"
+            "waleed_58k_api_response",
         ]
 
     transit_datasets = []
     for name in transit_dataset_names:
         df = pd.read_csv(f"./data/{name}.csv")
         transit_datasets.append(df)
-    
+
     transit_data = pd.concat(transit_datasets, axis=0)
     rideshare_data = pd.read_csv(f"./data/{rideshare_data_name}.csv")
 
@@ -53,16 +54,14 @@ def join_api_csv(rideshare_data_name, large = False) -> pd.DataFrame:
     #   Effectivley we are getting all rides for which we have a transit
     #   api call for.
     rideshare_transit_data = rideshare_data.merge(
-        transit_data,
-        on="group_id",
-        how="inner"
+        transit_data, on="group_id", how="inner"
     )
     return rideshare_transit_data
 
 
 def join_neighborhood_data(route_data, neighborhood_boundaries):
     """
-    This function merges in "Pickup Neighborhood" and "Dropoff 
+    This function merges in "Pickup Neighborhood" and "Dropoff
     Neighborhood" columns.
     """
     # Initialize new columns

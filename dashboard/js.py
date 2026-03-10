@@ -1,4 +1,4 @@
-# This defines the CSS styling code and Javascript code to handle displaying 
+# This defines the CSS styling code and Javascript code to handle displaying
 # the routes when a neighborhood is clicked.
 
 # Inject custom CSS to remove bounding box
@@ -17,7 +17,7 @@ CSS_STYLING = """
         </style>
     """
 
-JS_CODE  = """
+JS_CODE = """
     <script>
     
     function styleByFeatureType(feature) {

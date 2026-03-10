@@ -15,11 +15,11 @@ import pandas as pd
 RAW_DATA_PATH = "~/Downloads/tnp.csv"
 
 # 2. Run the command
-# The command will sample from the dataset [n * 4] unique rows, then create 
-# and store 4 equal sized CSV files, n rows each, one under each group 
+# The command will sample from the dataset [n * 4] unique rows, then create
+# and store 4 equal sized CSV files, n rows each, one under each group
 # member's name, in the data directory.
 #
-# Run the following command, replacing n with the number of rows 
+# Run the following command, replacing n with the number of rows
 #   `uv run python -m rideshare --makecsv n`
 #
 # For example, for 10k rows, run
@@ -28,7 +28,7 @@ RAW_DATA_PATH = "~/Downloads/tnp.csv"
 
 #### JOIN RIDESHARE AND TRANSIT DATA: ####
 # 1. Set file name
-# Set the name for the api response file, neighborhood data file, and the 
+# Set the name for the api response file, neighborhood data file, and the
 # intended output file name.
 # All files are CSV files in project-share-or-fare/data
 RIDESHARE_DATA = "ride_groups"
@@ -69,32 +69,33 @@ def main():
     # Runs the code to join our transit api responses back into our initial
     # rideshare dataset
     if args.join:
-        rideshare_transit_data = join_api_csv(RIDESHARE_DATA, large = args.l)
+        rideshare_transit_data = join_api_csv(RIDESHARE_DATA, large=args.l)
 
         # Add in pickup and dropoff neighborhood names
         neighborhood_boundaries = pd.read_csv(NEIGHBORHOOD_DATA)
         rideshare_transit_data_neighborhoods = join_neighborhood_data(
-            rideshare_transit_data, 
-            neighborhood_boundaries) # Takes 2-3 hours
-        
-        # Some minor cleaning 
+            rideshare_transit_data, neighborhood_boundaries
+        )  # Takes 2-3 hours
+
+        # Some minor cleaning
         # (adding transitPenalty variable, reformatting fields)
         rideshare_transit_data_neighborhoods_clean = clean_route_data(
-            rideshare_transit_data_neighborhoods)
+            rideshare_transit_data_neighborhoods
+        )
 
         # Output disaggregated data set for data visualization
         rideshare_transit_data_neighborhoods_clean.to_csv(
-            "./data/rideshare_transit_data.csv", index=False)
-        
+            "./data/rideshare_transit_data.csv", index=False
+        )
+
         # Output neighborhood-level dataset for map
         neighborhood_route_data = prep_data_for_map(
-            rideshare_transit_data_neighborhoods_clean, 
-            neighborhood_boundaries)
-        
+            rideshare_transit_data_neighborhoods_clean, neighborhood_boundaries
+        )
+
         neighborhood_route_data.to_csv(
             "./data/neighborhood_route_data.csv", index=False
         )
-
 
 
 if __name__ == "__main__":

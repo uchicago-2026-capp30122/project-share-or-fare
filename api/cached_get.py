@@ -6,9 +6,8 @@ from pathlib import Path
 import os
 
 
-
 # GLOBALS
-API_KEY = os.environ["API_KEY"] # DO NOT change this line!
+API_KEY = os.environ["API_KEY"]  # DO NOT change this line!
 CACHE_DIR = Path(__file__).parent / "_cache"
 URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
@@ -23,11 +22,18 @@ class FetchException(Exception):
             f"{response.status_code} retrieving {response.url}: {response.text}"
         )
 
-def get_json_request_params(origin: tuple[str,str], destination: tuple[str,str], 
-                            year: str, month:str, day: str, hour: str) -> tuple[dict,dict]:
+
+def get_json_request_params(
+    origin: tuple[str, str],
+    destination: tuple[str, str],
+    year: str,
+    month: str,
+    day: str,
+    hour: str,
+) -> tuple[dict, dict]:
     """
     Provide a string tuple of origin and destination (latitude, longitude) and returns
-    the header and data object needed for the API call. 
+    the header and data object needed for the API call.
 
     Parameters:
     - origin and destination (latitude, longitude) tuples
@@ -45,44 +51,42 @@ def get_json_request_params(origin: tuple[str,str], destination: tuple[str,str],
     # Constructing timestamp object
     date_str = f"{year}-{month}-{day}T{hour}:{00}:00Z"
 
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": API_KEY,
+        "X-Goog-FieldMask": "routes.legs.steps.travelMode,routes.legs.steps.staticDuration,routes.legs.steps.distanceMeters,routes.legs.steps.transitDetails.transitLine.vehicle.type,routes.legs.steps.transitDetails,routes.distanceMeters,routes.duration",
+    }
+    #  "X-Goog-FieldMask": "routes.localizedValues.distance,routes.localizedValues.duration,routes.localizedValues.transitFare,routes.polyline,routes.legs.steps.travelMode"}
 
-    headers = {"Content-Type": "application/json", 
-             "X-Goog-Api-Key": API_KEY,
-             "X-Goog-FieldMask": "routes.legs.steps.travelMode,routes.legs.steps.staticDuration,routes.legs.steps.distanceMeters,routes.legs.steps.transitDetails.transitLine.vehicle.type,routes.legs.steps.transitDetails,routes.distanceMeters,routes.duration"}
-            #  "X-Goog-FieldMask": "routes.localizedValues.distance,routes.localizedValues.duration,routes.localizedValues.transitFare,routes.polyline,routes.legs.steps.travelMode"}
-                            
     data = {
         "origin": {
-            "location": {
-                "latLng": {
-                    "latitude": origin_lat,
-                    "longitude": origin_long
-                }
-            }
+            "location": {"latLng": {"latitude": origin_lat, "longitude": origin_long}}
         },
         "destination": {
-            "location": {
-                "latLng": {
-                    "latitude": dest_lat,
-                    "longitude": dest_long
-                }
-            }
+            "location": {"latLng": {"latitude": dest_lat, "longitude": dest_long}}
         },
         "travelMode": "TRANSIT",
         "departureTime": date_str,
         "computeAlternativeRoutes": False,
         "languageCode": "en-US",
-        "units": "IMPERIAL"
+        "units": "IMPERIAL",
     }
     return headers, data
 
 
-def cached_get(origin: tuple[str,str], destination: tuple[str,str], 
-               year: str, month:str, day: str, hour: str, id: str) -> str:
+def cached_get(
+    origin: tuple[str, str],
+    destination: tuple[str, str],
+    year: str,
+    month: str,
+    day: str,
+    hour: str,
+    id: str,
+) -> str:
     """
     Retrieves the response text from the cache using the Trip ID if it exists,
     otherwise makes another API call and caches that result.
-    
+
     """
 
     # If CACHE_DIR does not exist, create it
@@ -97,16 +101,15 @@ def cached_get(origin: tuple[str,str], destination: tuple[str,str],
             cached_response = f.read()
         print("Returning cached response")
         return cached_response
-    
+
     # Otherwise, make the API call and store response in CACHE_DIR
     else:
         time.sleep(0.5)
-        headers, data = get_json_request_params(origin, destination, year, 
-                                                month, day, hour)
+        headers, data = get_json_request_params(
+            origin, destination, year, month, day, hour
+        )
         print(f"Making API call for {id}")
-        response = httpx.post(URL, follow_redirects=True, 
-                              headers = headers,
-                              json = data)
+        response = httpx.post(URL, follow_redirects=True, headers=headers, json=data)
         if response.status_code == 200:
             with open(cache_key_path, "w") as f:
                 f.write(response.text)

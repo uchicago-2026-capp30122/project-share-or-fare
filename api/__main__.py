@@ -31,7 +31,6 @@ def make_api_response_csv(input_file, output_file):
         reader = csv.DictReader(input)
         out_list = []
         for i, row in enumerate(reader):
-
             # Extract necessary data from row
             origin_lat = row["Pickup Centroid Latitude"]
             origin_long = row["Pickup Centroid Longitude"]
@@ -42,32 +41,43 @@ def make_api_response_csv(input_file, output_file):
             day = row["representative_day"]
             hour = row["start_hour"]
             group_id = row["group_id"]
-            
+
             # Makes API call or pulls from cache to get raw response
-            response_text = cached_get((origin_lat, origin_long),
-                                       (dest_lat, dest_long),
-                                       year, month, day, hour,group_id)
+            response_text = cached_get(
+                (origin_lat, origin_long),
+                (dest_lat, dest_long),
+                year,
+                month,
+                day,
+                hour,
+                group_id,
+            )
 
             # Process the response into a dictionary
             response_dict = parse_response(response_text)
 
             # Add group id (key for matching)
             response_dict["group_id"] = group_id
-            print(f"Rows processed: {i+1}")
+            print(f"Rows processed: {i + 1}")
             out_list.append(response_dict)
 
     # Write to output csv
-    fieldnames = ["group_id", "walkDist", "walkTime", 
-                  "transitDist", "transitTime",
-                  "totalDist", "totalTime", "modes"]
-    with open(output_file, "w",newline="") as output:
-        writer = csv.DictWriter(output, fieldnames = fieldnames, 
-                                restval="")
-        writer.writeheader() 
+    fieldnames = [
+        "group_id",
+        "walkDist",
+        "walkTime",
+        "transitDist",
+        "transitTime",
+        "totalDist",
+        "totalTime",
+        "modes",
+    ]
+    with open(output_file, "w", newline="") as output:
+        writer = csv.DictWriter(output, fieldnames=fieldnames, restval="")
+        writer.writeheader()
         for dict in out_list:
             writer.writerow(dict)
     print(f"Output {output_file}")
-
 
 
 if __name__ == "__main__":
