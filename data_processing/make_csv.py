@@ -176,7 +176,28 @@ def group_rides(data: pd.DataFrame) -> pd.DataFrame:
     return unique_calls
 
 
-def write_month_ride_groups(data: pd.DataFrame):
+def format_for_api(data: pd.DataFrame, unique_calls: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert day types into specific representative dates, with separate year,
+    month, and day columns with data as strings.
+
+    Parameters:
+        data
+        unique_calls
+
+    Returns: A pandas DataFrame with unique calls and with year, month, and day
+    values formatted for the API call
+
+    Author: Molly
+    """
+    unique_calls["representative_year"] = "2026"
+    unique_calls["representative_month"] = "04"
+    unique_calls["representative_day"] = data["day_type"].map({0: 22, 1: 25, 2: 26})
+
+    return unique_calls
+
+
+def get_month_ride_groups(data: pd.DataFrame):
     """
     Creates dataframe of unique rides-and-month, and writes that to the
     `ride_groups` csv file.
@@ -194,6 +215,7 @@ def write_month_ride_groups(data: pd.DataFrame):
     col_name = ["Fare", "Tip", "Additional Charges", "Trip Total"]
     for col in col_name:
         data[f"Float {col}"] = data[col].str[1:].astype(float)
+    print(data["Float Trip Total"])
 
     # Trip miles as a float
     data["Float Trip Miles"] = data["Trip Miles"].astype(float)
@@ -233,6 +255,7 @@ def write_month_ride_groups(data: pd.DataFrame):
         )
         .reset_index()
     )
+    print(data["Float Trip Total"])
 
     ride_groups = ride_groups.rename(
         columns={
@@ -246,30 +269,7 @@ def write_month_ride_groups(data: pd.DataFrame):
         }
     )
 
-    print(f"Agregated data has {len(ride_groups)} rows")
-    ride_groups.to_csv("../data/ride_groups.csv", index=False)
-    print("Sucessfully wrote ride_group dataset to data/ride_groups.csv")
-
-
-def format_for_api(data: pd.DataFrame, unique_calls: pd.DataFrame) -> pd.DataFrame:
-    """
-    Convert day types into specific representative dates, with separate year,
-    month, and day columns with data as strings.
-
-    Parameters:
-        data
-        unique_calls
-
-    Returns: A pandas DataFrame with unique calls and with year, month, and day
-    values formatted for the API call
-
-    Author: Molly
-    """
-    unique_calls["representative_year"] = "2026"
-    unique_calls["representative_month"] = "04"
-    unique_calls["representative_day"] = data["day_type"].map({0: 22, 1: 25, 2: 26})
-
-    return unique_calls
+    return ride_groups
 
 
 def sample_and_split(data: pd.DataFrame, size: int):
