@@ -26,7 +26,7 @@ def clean(filename: str) -> pd.DataFrame:
 
     Author: Molly
     """
-    df = pd.read_csv(filename, thousands=',', dtype={"Trip Miles": float})
+    df = pd.read_csv(filename, thousands=",", dtype={"Trip Miles": float})
 
     # Select relevant columns
     data = df[

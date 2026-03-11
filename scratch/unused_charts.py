@@ -1,6 +1,7 @@
 import pandas as pd
 import altair as alt
 
+
 def ratio_by_month(df: pd.DataFrame):
     """
     Creates a line graph showing the change in transit-rideshare time ratio
@@ -70,6 +71,67 @@ def ratio_by_month(df: pd.DataFrame):
         .resolve_scale(y="independent")
         .configure_axisY(titleAngle=0, titleAlign="right", titleY=-12, titleX=0)
         .configure_axisRight(titleAngle=0, titleAlign="left", titleY=-12, titleX=0)
+    )
+
+    return chart
+
+
+def most_pickups(df):
+    """
+    Top Neighborhoods with the most rideshare trips
+    Total rides per neighborhood (in descending order sort highest to lowest
+
+    """
+    rides_by_neighborhood = df.sort_values(by="Count", ascending=False).head(20)
+
+    chart = (
+        alt.Chart(rides_by_neighborhood)
+        .mark_bar()
+        .encode(
+            x="Count:Q",
+            y=alt.Y("Pickup Neighborhood:N", sort="-x", title="Neighborhood"),
+            tooltip=["Pickup Neighborhood", "Count"],
+        )
+        .properties(title="Top 20 Neighborhoods with Most Pickups")
+    )
+
+    return chart
+
+
+def corridor_bar_chart(df):
+    """
+    Transit vs Rideshare Connectivity by Neighborhood Corridors
+    Bar Chart of Most and Least Connected Neighborhood Pairs
+    A ratio close to 1 means transit and rideshare take similar time (better connectivity)
+    Higher ratios (>1) indicate lower transit connectivity, meaning transit takes longer than rideshare
+    """
+    # Remove corridors where pickup and dropoff are the same
+    corridors = df[df["Pickup Neighborhood"] != df["Dropoff Neighborhood"]]
+
+    # Create corridor label
+    corridors["corridor"] = (
+        corridors["Pickup Neighborhood"] + " → " + corridors["Dropoff Neighborhood"]
+    )
+
+    top_corridors = corridors.sort_values("Count", ascending=False).head(20)
+
+    chart = (
+        alt.Chart(top_corridors)
+        .mark_bar()
+        .encode(
+            x=alt.X("transitPenalty_wavg:Q", title="Average Transit Penalty"),
+            y=alt.Y("corridor:N", sort="x", title="Neighborhood Corridor"),
+            tooltip=[
+                "Pickup Neighborhood",
+                "Dropoff Neighborhood",
+                alt.Tooltip(
+                    "transitPenalty_wavg", format=".2f", title="Transit Penalty"
+                ),
+            ],
+        )
+        .properties(
+            title="Transit Penalty for Top 20 Most Frequented Corridors",
+        )
     )
 
     return chart

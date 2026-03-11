@@ -183,32 +183,12 @@ def rides_by_month(df: pd.DataFrame):
 
 
 ########################### Neighborhood Analysis ############################
-def most_pickups(df):
-    """
-    Top Neighborhoods with the most rideshare trips
-    Total rides per neighborhood (in descending order sort highest to lowest
-
-    """
-    rides_by_neighborhood = df.sort_values(by="Count", ascending=False).head(20)
-
-    chart = (
-        alt.Chart(rides_by_neighborhood)
-        .mark_bar()
-        .encode(
-            x="Count:Q",
-            y=alt.Y("Pickup Neighborhood:N", sort="-x", title="Neighborhood"),
-            tooltip=["Pickup Neighborhood", "Count"],
-        )
-        .properties(title="Top 20 Neighborhoods with Most Pickups")
-    )
-
-    return chart
-
-
 def distance_vs_demand_quadrants(df):
     """
     Distance (miles) vs Rideshare Demand by Neighborhood
     Scatter Plot with Quadrants
+
+    Authors: Waleed, Sarah
     """
 
     neighborhood_stats = df.sort_values(by="distance_wavg", ascending=False)
@@ -292,46 +272,10 @@ def distance_vs_demand_quadrants(df):
     return chart
 
 
-def corridor_bar_chart(df):
-    """
-    Transit vs Rideshare Connectivity by Neighborhood Corridors
-    Bar Chart of Most and Least Connected Neighborhood Pairs
-    A ratio close to 1 means transit and rideshare take similar time (better connectivity)
-    Higher ratios (>1) indicate lower transit connectivity, meaning transit takes longer than rideshare
-    """
-    # Remove corridors where pickup and dropoff are the same
-    corridors = df[df["Pickup Neighborhood"] != df["Dropoff Neighborhood"]]
-
-    # Create corridor label
-    corridors["corridor"] = (
-        corridors["Pickup Neighborhood"] + " → " + corridors["Dropoff Neighborhood"]
-    )
-
-    top_corridors = corridors.sort_values("Count", ascending=False).head(20)
-
-    chart = (
-        alt.Chart(top_corridors)
-        .mark_bar()
-        .encode(
-            x=alt.X("transitPenalty_wavg:Q", title="Average Transit Penalty"),
-            y=alt.Y("corridor:N", sort="x", title="Neighborhood Corridor"),
-            tooltip=[
-                "Pickup Neighborhood",
-                "Dropoff Neighborhood",
-                alt.Tooltip(
-                    "transitPenalty_wavg", format=".2f", title="Transit Penalty"
-                ),
-            ],
-        )
-        .properties(
-            title="Transit Penalty for Top 20 Most Frequented Corridors",
-        )
-    )
-
-    return chart
-
-
 def transit_penalty_heatmap(pickup_neighborhods, neighborhood_route_data):
+    """
+    Author: Sarah
+    """
 
     top_pickup_neighborhoods = (
         pickup_neighborhods.sort_values("Count", ascending=False)
@@ -364,6 +308,9 @@ def transit_penalty_heatmap(pickup_neighborhods, neighborhood_route_data):
 
 
 def rideshare_count_heatmap(pickup_neighborhoods, neighborhood_route_data):
+    """
+    Author: Sarah
+    """
 
     top_pickup_neighborhoods = (
         pickup_neighborhoods.sort_values("Count", ascending=False)
