@@ -1,6 +1,12 @@
 import argparse
 from .join import join_api_csv, join_neighborhood_data
-from .make_csv import clean, group_rides, format_for_api, sample_and_split
+from .make_csv import (
+    clean,
+    group_rides,
+    format_for_api,
+    get_month_ride_groups,
+    sample_and_split,
+)
 from .clean_route_data import clean_route_data, prep_data_for_map
 import pandas as pd
 
@@ -25,19 +31,36 @@ RAW_DATA_PATH = "~/Downloads/tnp.csv"
 # For example, for 10k rows, run
 #   `uv run python -m data_processing --makecsv 10000`
 
+# 3. Output
+# This process should output:
+#   - 4 files formatted to call with the api process, for example
+#       "./data/molly_10k.csv"
+#       "./data/sabrina_10k.csv"
+#       "./data/sarah_10k.csv"
+#       "./data/waleed_10k.csv"
+#   - "" --  a file with unique trips by month, used for joining api data back
+#       into our individual trip level data
 
-#### JOIN RIDESHARE AND TRANSIT DATA: ####
+
+#### JOIN RIDESHARE, TRANSIT, NEIGHBORHOOD DATA: ####
 # 1. Set file name
 # Set the name for the api response file, neighborhood data file, and the
 # intended output file name.
 # All files are CSV files in project-share-or-fare/data
 RIDESHARE_DATA = "ride_groups"
 NEIGHBORHOOD_DATA = "data/Neighborhoods_2012b_20260227.csv"
-OUTPUT_NAME = "small_medium_merged"
 
 # 2. Run the dataset
-# For the small-medium (500 and 10k rows) datasets, run:
-#   `uv run python -m data_processing --join` from project-share-or-fare directory
+# From project-share-or-fare directory run:
+#   `uv run python -m data_processing --join`
+
+# 3. Output
+# This process should ouput
+#   - "/data/rideshare_transit_data.csv" -- a file containing individual trips
+#       with rideshare and transit data
+#   - "./data/neighborhood_route_data.csv" -- a file containing unique trips
+#       grouped by start and end neighborhood with rideshare data, transit data,
+#       and neighborhood polygons
 
 
 ###############################################################################
@@ -55,6 +78,7 @@ def main():
     )
     args = parser.parse_args()
 
+    # Make CSV
     # Runs the code to load, clean, sample, and split our data into the
     # desired size and writes to a csv for each group member (4 csvs total)
     if args.makecsv and args.makecsv >= 0:
@@ -63,9 +87,16 @@ def main():
         unique_rides = group_rides(data)
         unique_rides_formatted = format_for_api(data, unique_rides)
 
-        print(f"Making csv files for {size} unique API calls")
+        print(f"Writing csv files for {size} unique API calls")
         sample_and_split(unique_rides_formatted, size)
+        print("Success")
 
+        month_groups = get_month_ride_groups(data)
+        print("Writing month_ride_group dataset to 'data/ride_groups.csv'")
+        month_groups.to_csv("../data/ride_groups.csv", index=False)
+        print(f"Success, agregated data has {len(month_groups)} rows")
+
+    # Join
     # Runs the code to join our transit api responses back into our initial
     # rideshare dataset
     if args.join:

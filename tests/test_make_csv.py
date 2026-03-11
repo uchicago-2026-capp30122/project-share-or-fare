@@ -4,6 +4,39 @@ import io
 import data_processing.make_csv as mc
 
 
+@pytest.fixture
+def data():
+    return pd.DataFrame(
+        {
+            "group_id": [1, 1, 1],
+            "Trip Seconds": ["1,200", "1,000", "120"],
+            "Trip Miles": ["2.0", "2.20", "2.20"],
+            "Fare": ["$1.20", "$1.30", "$1.20"],
+            "Tip": ["$1.20", "$1.30", "$1.20"],
+            "Additional Charges": ["$1.20", "$1.30", "$1.20"],
+            "Trip Total": ["$1.20", "$1.30", "$1.20"],
+            "Trip Start Timestamp": [
+                pd.Timestamp("2025-05-01 10:00:00", tz="UTC"),
+                pd.Timestamp("2025-05-01 10:45:00", tz="UTC"),
+                pd.Timestamp("2025-06-03 10:00:00", tz="UTC"),
+            ],
+            "Trip End Timestamp": [
+                pd.Timestamp("2025-05-01 10:00:00", tz="UTC"),
+                pd.Timestamp("2025-05-01 10:45:00", tz="UTC"),
+                pd.Timestamp("2025-06-03 10:00:00", tz="UTC"),
+            ],
+            "Pickup Census Tract": ["", "", ""],
+            "Dropoff Census Tract": ["", "", ""],
+            "Pickup Centroid Latitude": ["1", "2", "3"],
+            "Pickup Centroid Longitude": ["", "", ""],
+            "Dropoff Centroid Latitude": ["", "", ""],
+            "Dropoff Centroid Longitude": ["", "", ""],
+            "day_type": ["1", "1", "1"],
+            "Trip ID": [1, 2, 3],
+        }
+    )
+
+
 def test_clean():
     # Row 1: Valid Chicago trip
     # Row 2: Invalid (90% Chicago) - should be dropped
@@ -58,3 +91,27 @@ def test_format_for_api():
     assert result.loc[result["day_type"] == 1, "representative_day"].iloc[0] == 25
     assert result.loc[result["day_type"] == 2, "representative_day"].iloc[0] == 26
     assert result["representative_year"].unique()[0] == "2026"
+
+
+def test_get_month_ride_groups_agregates_months(data):
+    assert len(mc.get_month_ride_groups(data)) == 2
+
+
+def test_get_month_ride_groups_counts_rides(data):
+    ride_groups = mc.get_month_ride_groups(data)
+    assert ride_groups["Count"].iloc[0] == 2
+
+
+def test_get_month_ride_groups_averages_seconds(data):
+    ride_groups = mc.get_month_ride_groups(data)
+    assert ride_groups["Average Trip Seconds"].iloc[0] == 1100
+
+
+def test_get_month_ride_groups_averages_cost(data):
+    ride_groups = mc.get_month_ride_groups(data)
+    assert ride_groups["Average Trip Total"].iloc[0] == 1.25
+
+
+def test_get_month_ride_groups_first_pickup_latitude(data):
+    ride_groups = mc.get_month_ride_groups(data)
+    assert ride_groups["Pickup Centroid Latitude"].iloc[0] == "1"
