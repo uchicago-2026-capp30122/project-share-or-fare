@@ -69,7 +69,7 @@ def main():
     # Runs the code to join our transit api responses back into our initial
     # rideshare dataset
     if args.join:
-        rideshare_transit_data = join_api_csv(RIDESHARE_DATA, large=args.l)
+        rideshare_transit_data = join_api_csv(RIDESHARE_DATA)
 
         # Add in pickup and dropoff neighborhood names
         neighborhood_boundaries = pd.read_csv(NEIGHBORHOOD_DATA)

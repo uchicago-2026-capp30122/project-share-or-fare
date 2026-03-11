@@ -9,7 +9,7 @@ DROPOFF_LAT = "Dropoff Centroid Latitude"
 DROPOFF_LONG = "Dropoff Centroid Longitude"
 
 
-def join_api_csv(rideshare_data_name, large=False) -> pd.DataFrame:
+def join_api_csv(rideshare_data_name) -> pd.DataFrame:
     """
     Join the output csv from the api call back to the original csv dataset on group_id
 
@@ -31,14 +31,6 @@ def join_api_csv(rideshare_data_name, large=False) -> pd.DataFrame:
         "sarah_500_api_response",
         "waleed_500_api_response",
     ]
-
-    if large:
-        transit_dataset_names = [
-            "molly_58k_api_response",
-            "sabrina_58k_api_response",
-            "sarah_58k_api_response",
-            "waleed_58k_api_response",
-        ]
 
     transit_datasets = []
     for name in transit_dataset_names:
