@@ -3,16 +3,185 @@ import altair as alt
 from .transform import dataset_sample, weighted_median
 
 
-def weighted_avg(group, value_col, weight_col):
+############################# Trip Level Analysis #############################
+def distribution_of_rides(df: pd.DataFrame, row_chosen: str, dropdown_options: dict):
     """
-    Helper function for prep_data_for_map
+    Creates a histogram of the distribution of ride times
+
+    Arguments:
+        df: a pandas dataframe with rideshare and transit data
+        row_chosen: The dimension along which to create the histogram
+        dropdown_options: A dictionary matching the row options to their
+            lable names
+
+    Returns: An altair chart
+
+    Author: Sabrina
     """
-    return (group[value_col] * group[weight_col]).sum() / group[weight_col].sum()
+    short_df = dataset_sample(df, 10)
+    total_rides = short_df["Count"].sum()
+    short_df["Percentage"] = (short_df["Count"] / total_rides) * 100
+
+    step_size = {
+        "rideshareTime": 5,
+        "totalTransitTime": 5,
+        "Log Rideshare Min": 0.1,
+        "Log Transit Min": 0.1,
+        "Float Trip Miles": 1,
+    }
+
+    domain_range = {
+        "rideshareTime": [0, 100],
+        "totalTransitTime": [0, 100],
+        "Log Rideshare Min": [0, 2],
+        "Log Transit Min": [0.4, 2.3],
+        "Float Trip Miles": [0, 26],
+    }
+
+    chart = (
+        alt.Chart(short_df)
+        .mark_bar()
+        .encode(
+            alt.X(
+                f"{row_chosen}:Q",
+                title=dropdown_options[row_chosen],
+                bin=alt.Bin(step=step_size[row_chosen]),
+            ).scale(domain=domain_range[row_chosen]),
+            alt.Y("sum(Percentage):Q", title="Percentage of Rides"),
+        )
+        .configure_axis(grid=False)
+    )
+
+    return chart
+
+
+def transit_rideshare_comparison(df: pd.DataFrame):
+    """
+    Creates a scatter plot between rideshare time and transit time
+
+    Arguments:
+        df: The pandas dataframe with rideshare and transit data
+
+    Returns: An altair chart, a scatter plot of rideshare and transit time
+
+    Author: Sabrina
+    """
+    short_df = dataset_sample(df, 100)
+
+    ratio_1_line = pd.DataFrame(
+        {"rideshareTime": [0, 100], "totalTransitTime": [0, 100]}
+    )
+
+    chart = (
+        alt.Chart(short_df)
+        .mark_circle()
+        .encode(
+            alt.X("rideshareTime:Q")
+            .title("Trip Time via Rideshare (Minutes)")
+            .scale(domain=[0, 100]),
+            alt.Y("totalTransitTime:Q")
+            .title("Trip Time via Public Transportation (Minutes)")
+            .scale(domain=[0, 100]),
+        )
+        + alt.Chart(ratio_1_line)
+        .mark_line(color="lightgray", thickness=0.2)
+        .encode(x="rideshareTime", y="totalTransitTime")
+    ).configure_axis(grid=False)
+
+    return chart
+
+
+def distribution_of_ratio(df: pd.DataFrame):
+    """
+    Creates a hisogram of the transit to rideshare time ratio
+
+    Arguments:
+        df: The pandas dataframe with rideshare and transit data
+
+    Returns: An altair chart, histogram of distribution of transit penalty score
+        with 1:1 and median marked
+
+    Author: Sabrina
+    """
+    df["transitPenalty"] = df["transitPenalty"].round(1)
+
+    median = weighted_median(df, "transitPenalty")
+
+    chart = (
+        alt.Chart(df)
+        .mark_bar()
+        .encode(
+            alt.X(
+                "transitPenalty:O",
+                title="Transit Penalty Score (Transit Time / Rideshare Time)",
+                scale=alt.Scale(domain=[k / 10 for k in range(4, 51)]),
+            ),
+            alt.Y("sum(Count):Q", title="Number of Rides"),
+        )
+        .interactive()
+        + alt.Chart(pd.DataFrame({"transitPenalty": [1]}))
+        .mark_rule(color="lightgrey")
+        .encode(
+            alt.X(
+                "transitPenalty:O",
+                title="Transit Penalty Score (Transit Time / Rideshare Time)",
+            )
+        )
+        + alt.Chart(pd.DataFrame({"transitPenalty": [median]}))
+        .mark_rule(color="red")
+        .encode(
+            alt.X(
+                "transitPenalty:O",
+                title="Transit Penalty Score (Transit Time / Rideshare Time)",
+            )
+        )
+    ).configure_axis(grid=False)
+
+    return chart
+
+
+def rides_by_month(df: pd.DataFrame):
+    """
+    Creates a bar chart of average daily rides per month
+
+    Arguments:
+        df: The pandas dataframe with rideshare and transit data
+
+    Returns: An altair chart, bar chart of rides per day per month
+
+    Author: Sabrina
+    """
+    # Agregate by month, summing rides
+    rides_per_month = df.groupby("month", as_index=False).aggregate({"Count": "sum"})
+
+    # Create a short dataframe of days in a month
+    days_in_month = {
+        "month": [k for k in range(1, 13)],
+        "Days": [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+    }
+    days_df = pd.DataFrame(days_in_month)
+
+    # Join agregated data with days in month to get average rides per day
+    month_count_days = pd.merge(rides_per_month, days_df, on="month", how="left")
+    month_count_days["Average Rides Per Day"] = (
+        month_count_days["Count"] / month_count_days["Days"]
+    )
+
+    # Visualize
+    chart = (
+        alt.Chart(month_count_days)
+        .mark_bar()
+        .encode(
+            alt.X("month:O", title="Month", axis=alt.Axis(labelAngle=0)),
+            alt.Y("Average Rides Per Day:Q"),
+        )
+        .configure_axis(grid=False)
+    )
+
+    return chart
 
 
 ########################### Neighborhood Analysis ############################
-
-
 def most_pickups(df):
     """
     Top Neighborhoods with the most rideshare trips
@@ -300,173 +469,3 @@ def corridor_lowest_price(df):
     )
 
     return price_chart
-
-
-############################# Trip level analysis #############################
-df = pd.read_csv("./data/rideshare_transit_data.csv")
-
-
-def distribution_of_rides(df: pd.DataFrame, row_chosen: str, dropdown_options: dict):
-    """
-    Creates a histogram of the distribution of ride times
-
-    Arguments:
-        df: a pandas dataframe with rideshare and transit data
-        row_chosen: The dimension along which to create the histogram
-        dropdown_options: A dictionary matching the row options to their
-            lable names
-
-    Returns: An altair chart
-
-    Author: Sabrina
-    """
-    short_df = dataset_sample(df, 10)
-    total_rides = short_df["Count"].sum()
-    short_df["Percentage"] = (short_df["Count"] / total_rides) * 100
-
-    step_size = {
-        "rideshareTime": 5,
-        "totalTransitTime": 5,
-        "Log Rideshare Min": 0.1,
-        "Log Transit Min": 0.1,
-        "Float Trip Miles": 1,
-    }
-
-    domain_range = {
-        "rideshareTime": [0, 100],
-        "totalTransitTime": [0, 100],
-        "Log Rideshare Min": [0, 2],
-        "Log Transit Min": [0.4, 2.3],
-        "Float Trip Miles": [0, 26],
-    }
-
-    chart = (
-        alt.Chart(short_df)
-        .mark_bar()
-        .encode(
-            alt.X(
-                f"{row_chosen}:Q",
-                title=dropdown_options[row_chosen],
-                bin=alt.Bin(step=step_size[row_chosen]),
-            ).scale(domain=domain_range[row_chosen]),
-            alt.Y("sum(Percentage):Q", title="Percentage of Rides"),
-        )
-        .configure_axis(grid=False)
-    )
-
-    return chart
-
-
-def transit_rideshare_comparison(df: pd.DataFrame):
-    """
-    Creates a scatter plot between rideshare time and transit time
-
-    Arguments:
-        df: The pandas dataframe with rideshare and transit data
-
-    Returns: An altair chart, a scatter plot of rideshare and transit time
-
-    Author: Sabrina
-    """
-    short_df = dataset_sample(df, 100)
-
-    ratio_1_line = pd.DataFrame(
-        {"rideshareTime": [0, 100], "totalTransitTime": [0, 100]}
-    )
-
-    chart = (
-        alt.Chart(short_df)
-        .mark_circle()
-        .encode(
-            alt.X("rideshareTime:Q")
-            .title("Trip Time via Rideshare (Minutes)")
-            .scale(domain=[0, 100]),
-            alt.Y("totalTransitTime:Q")
-            .title("Trip Time via Public Transportation (Minutes)")
-            .scale(domain=[0, 100]),
-        )
-        + alt.Chart(ratio_1_line)
-        .mark_line(color="lightgray", thickness=0.2)
-        .encode(x="rideshareTime", y="totalTransitTime")
-    ).configure_axis(grid=False)
-
-    return chart
-
-
-def distribution_of_ratio(df: pd.DataFrame):
-    """
-    Creates a hisogram of the transit to rideshare time ratio
-
-    Author: Sabrina
-    """
-    df["transitPenalty"] = df["transitPenalty"].round(1)
-
-    median = weighted_median(df, "transitPenalty")
-
-    chart = (
-        alt.Chart(df)
-        .mark_bar()
-        .encode(
-            alt.X(
-                "transitPenalty:O",
-                title="Transit Penalty Score (Transit Time / Rideshare Time)",
-                scale=alt.Scale(domain=[k / 10 for k in range(4, 51)]),
-            ),
-            alt.Y("sum(Count):Q", title="Number of Rides"),
-        )
-        .interactive()
-        + alt.Chart(pd.DataFrame({"transitPenalty": [1]}))
-        .mark_rule(color="lightgrey")
-        .encode(
-            alt.X(
-                "transitPenalty:O",
-                title="Transit Penalty Score (Transit Time / Rideshare Time)",
-            )
-        )
-        + alt.Chart(pd.DataFrame({"transitPenalty": [median]}))
-        .mark_rule(color="red")
-        .encode(
-            alt.X(
-                "transitPenalty:O",
-                title="Transit Penalty Score (Transit Time / Rideshare Time)",
-            )
-        )
-    ).configure_axis(grid=False)
-
-    return chart
-
-
-def rides_by_month(df: pd.DataFrame):
-    """
-    Creates a bar chart of average daily rides per month
-
-    Author: Sabrina
-    """
-    # Agregate by month, summing rides
-    rides_per_month = df.groupby("month", as_index=False).aggregate({"Count": "sum"})
-
-    # Create a short dataframe of days in a month
-    days_in_month = {
-        "month": [k for k in range(1, 13)],
-        "Days": [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
-    }
-    days_df = pd.DataFrame(days_in_month)
-
-    # Join agregated data with days in month to get average rides per day
-    month_count_days = pd.merge(rides_per_month, days_df, on="month", how="left")
-    month_count_days["Average Rides Per Day"] = (
-        month_count_days["Count"] / month_count_days["Days"]
-    )
-
-    # Visualize
-    chart = (
-        alt.Chart(month_count_days)
-        .mark_bar()
-        .encode(
-            alt.X("month:O", title="Month", axis=alt.Axis(labelAngle=0)),
-            alt.Y("Average Rides Per Day:Q"),
-        )
-        .configure_axis(grid=False)
-    )
-
-    return chart

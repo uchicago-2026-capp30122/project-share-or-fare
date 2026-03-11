@@ -3,9 +3,8 @@ import html
 from dash import html
 import dash_bootstrap_components as dbc
 import dash_vega_components as dvc
-from .visualization.transform import get_text
+from .visualization.transform import weighted_avg, get_text
 from .visualization.altair_charts import (
-    weighted_avg,
     distance_vs_demand_quadrants,
     transit_penalty_heatmap,
     rideshare_count_heatmap,

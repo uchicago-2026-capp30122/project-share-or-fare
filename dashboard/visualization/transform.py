@@ -3,6 +3,15 @@ import random
 import math
 
 
+def weighted_avg(group, value_col, weight_col):
+    """
+    Helper function for prep_data_for_map
+
+    Author: Sarah
+    """
+    return (group[value_col] * group[weight_col]).sum() / group[weight_col].sum()
+
+
 def log_transform_time(df: pd.DataFrame) -> pd.DataFrame:
     """
     Creates columns for log trip time in the given dataframe

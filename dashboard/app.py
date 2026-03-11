@@ -7,11 +7,8 @@ import html
 from dash import Dash, html, dcc, callback, Output, Input
 import numpy as np
 import dash_bootstrap_components as dbc
-from .visualization.transform import log_transform_time
-from .visualization.altair_charts import (
-    weighted_avg,
-    distribution_of_rides,
-)
+from .visualization.transform import weighted_avg, log_transform_time
+from .visualization.altair_charts import distribution_of_rides
 
 # Import static Components
 from .js import JS_CODE, CSS_STYLING
@@ -34,7 +31,8 @@ from .discussion import discussion
 ### This file handles the interactive components of the app, and combines
 ### with the static components
 
-#### Interactive Map (Tab 3) ###
+
+########################### Interactive Map (Tab 3) ###########################
 server = Flask(__name__)
 app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.LUX])
 
