@@ -8,8 +8,7 @@ from .visualization.altair_charts import (
     distance_vs_demand_quadrants,
     transit_penalty_heatmap,
     rideshare_count_heatmap,
-    corridor_highest_price,
-    corridor_lowest_price,
+    corridor_price,
 )
 
 # Load captions
@@ -68,13 +67,13 @@ rideshare_count_heatmap_analysis = dvc.Vega(
 
 corridor_highest_price_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=corridor_highest_price(neighborhood_route_data).to_dict(),
+    spec=corridor_price(neighborhood_route_data, is_high=True).to_dict(),
     style={"display": "flex", "justifyContent": "center", "width": "100%"},
 )
 
 corridor_lowest_price_analysis = dvc.Vega(
     opt={"renderer": "svg", "actions": False},
-    spec=corridor_lowest_price(neighborhood_route_data).to_dict(),
+    spec=corridor_price(neighborhood_route_data, is_high=False).to_dict(),
     style={"display": "flex", "justifyContent": "center", "width": "100%"},
 )
 

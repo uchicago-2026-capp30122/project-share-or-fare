@@ -103,6 +103,7 @@ def distribution_of_ratio(df: pd.DataFrame):
 
     Author: Sabrina
     """
+    # Create score bins by rounding to 1 decimal place
     df["transitPenalty"] = df["transitPenalty"].round(1)
 
     median = weighted_median(df, "transitPenalty")
@@ -240,7 +241,6 @@ def distance_vs_demand_quadrants(df):
                 title="Log Total Rideshare Trips",
                 scale=alt.Scale(type="log", domain=[1, 2000000]),
             ),
-            # color=alt.Color("Quadrant:N", legend=None),
             tooltip=[
                 "Pickup Neighborhood",
                 alt.Tooltip(
@@ -249,13 +249,6 @@ def distance_vs_demand_quadrants(df):
                 alt.Tooltip("Count", title="# Rides"),
             ],
         )
-    )
-
-    # Neighborhood Labels
-    labels = (
-        alt.Chart(neighborhood_stats)
-        .mark_text(align="left", dx=6, dy=-3, fontSize=7)
-        .encode(x="distance_wavg:Q", y="Count:Q", text="Pickup Neighborhood:N")
     )
 
     # Vertical (distance) and Horizontal (demand) Lines
@@ -395,9 +388,11 @@ def rideshare_count_heatmap(pickup_neighborhoods, neighborhood_route_data):
     return chart
 
 
-def corridor_highest_price(df):
+def corridor_price(df, is_high: bool):
+    """
+    Authors: Waleed, Sarah
+    """
 
-    # connectivity_stats = connectivity_stats[connectivity_stats["Pickup Neighborhood"] != connectivity_stats["Dropoff Neighborhood"]]
     corridors = df[df["Pickup Neighborhood"] != df["Dropoff Neighborhood"]]
 
     # Create corridor label
@@ -408,15 +403,15 @@ def corridor_highest_price(df):
     # Remove low trip corridors as they are outliers
     corridors = corridors[corridors["Count"] > 20]
 
-    # Get top 20 highest and lowest fares
-    highest = corridors.nlargest(20, "tripCost_wavg")
-    lowest = corridors.nsmallest(20, "tripCost_wavg")
-
-    plot_df = pd.concat([highest, lowest])
+    # Get top 20 highest or lowest fares
+    if is_high:
+        corridors = corridors.nlargest(20, "tripCost_wavg")
+    else:
+        corridors = corridors.nsmallest(20, "tripCost_wavg")
 
     # Bar chart
     price_chart = (
-        alt.Chart(highest)
+        alt.Chart(corridors)
         .mark_bar()
         .encode(
             x=alt.X("tripCost_wavg:Q", title="Average Fare ($)"),
@@ -428,43 +423,6 @@ def corridor_highest_price(df):
                 "Count",
             ],
             color=alt.Color("Count"),
-        )
-    )
-
-    return price_chart
-
-
-def corridor_lowest_price(df):
-
-    # connectivity_stats = connectivity_stats[connectivity_stats["Pickup Neighborhood"] != connectivity_stats["Dropoff Neighborhood"]]
-    corridors = df[df["Pickup Neighborhood"] != df["Dropoff Neighborhood"]]
-
-    # Create corridor label
-    corridors["corridor"] = (
-        corridors["Pickup Neighborhood"] + " → " + corridors["Dropoff Neighborhood"]
-    )
-
-    # Remove low trip corridors as they are outliers
-    corridors = corridors[(corridors["Count"] > 20) & (corridors["tripCost_wavg"] > 0)]
-
-    # Get top 20 highest and lowest fares
-    highest = corridors.nlargest(20, "tripCost_wavg")
-    lowest = corridors.nsmallest(20, "tripCost_wavg")
-
-    # Bar chart
-    price_chart = (
-        alt.Chart(lowest)
-        .mark_bar()
-        .encode(
-            x=alt.X("tripCost_wavg:Q", title="Average Fare ($)"),
-            y=alt.Y("corridor:N", sort="-x", title="Neighborhood Corridor"),
-            color=alt.Color("Count"),
-            tooltip=[
-                "Pickup Neighborhood",
-                "Dropoff Neighborhood",
-                alt.Tooltip("tripCost_wavg", format=".2f", title="Average Fare ($)"),
-                "Count",
-            ],
         )
     )
 

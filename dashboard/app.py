@@ -479,6 +479,7 @@ def update_graph(row_chosen):
     chart = distribution_of_rides(df, row_chosen, dropdown_options)
     return chart.to_dict()
 
+
 @callback(
     Output(component_id="hist_title", component_property="children"),
     Input(component_id="xaxis-column", component_property="value"),
@@ -535,4 +536,4 @@ app.layout = dcc.Tabs(
 
 # Run the app
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

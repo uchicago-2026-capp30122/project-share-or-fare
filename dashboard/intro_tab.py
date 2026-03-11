@@ -1,17 +1,9 @@
-# from flask import Flask, request, jsonify
-# import folium
-# import branca
-# from folium import GeoJson, GeoJsonTooltip
 import pandas as pd
-from shapely import from_wkt
 import html
 from dash import html, dcc
 
-# import numpy as np
-# import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 
-# import altair as alt
 import dash_vega_components as dvc
 from .visualization.transform import log_transform_time, get_text
 
@@ -41,10 +33,7 @@ alt_hist = (
     ),
 )
 
-hist_title = html.Div(
-    id="hist_title",
-    children=[]
-)
+hist_title = html.Div(id="hist_title", children=[])
 
 # Page components
 intro = [
@@ -94,14 +83,13 @@ hist1 = [
                     width={"size": 6, "offset": 3},
                 )
             ),
-            dbc.Row([
-                html.Hr(),
-                html.H5(
-                    hist_title,
-                    style={"textAlign": "center"}
-                ),
-                html.Div(alt_hist)
-            ]),
+            dbc.Row(
+                [
+                    html.Hr(),
+                    html.H5(hist_title, style={"textAlign": "center"}),
+                    html.Div(alt_hist),
+                ]
+            ),
         ],
     ),
 ]
