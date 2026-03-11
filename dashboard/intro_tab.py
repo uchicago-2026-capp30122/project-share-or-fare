@@ -15,6 +15,7 @@ import dash_bootstrap_components as dbc
 import dash_vega_components as dvc
 from .visualization.transform import log_transform_time, get_text
 
+
 data_text = get_text("dashboard/text/data.txt")
 intro_text = get_text("dashboard/text/intro.txt")
 
@@ -29,6 +30,21 @@ dropdown_options = {
     "Float Trip Miles": "Rideshare Trip Distance (Miles)",
 }
 
+
+# Altair Histogram
+alt_hist = (
+    dvc.Vega(
+        id="altair-hist",
+        opt={"renderer": "svg", "actions": False},
+        spec={},
+        style={"display": "flex", "justifyContent": "center", "width": "100%"},
+    ),
+)
+
+hist_title = html.Div(
+    id="hist_title",
+    children=[]
+)
 
 # Page components
 intro = [
@@ -52,17 +68,6 @@ intro = [
     html.Div(children=intro_text, style={"white-space": "pre-wrap"}),
 ]
 
-
-# Altair Histogram
-alt_hist = (
-    dvc.Vega(
-        id="altair-hist",
-        opt={"renderer": "svg", "actions": False},
-        spec={},
-        style={"display": "flex", "justifyContent": "center", "width": "100%"},
-    ),
-)
-
 hist1 = [
     html.Hr(),
     html.H3(children="A Brief Overview of Our Data"),
@@ -71,8 +76,6 @@ hist1 = [
         children="There were 93,510,249 rideshare rides in Chicago in 2025. Our random sample contains 15,341,421 rides."
     ),
     html.Hr(),
-    html.Hr(),
-    html.H3("Distribution of Rideshare Data"),
     dbc.Col(
         children=[
             dbc.Row(
@@ -91,7 +94,14 @@ hist1 = [
                     width={"size": 6, "offset": 3},
                 )
             ),
-            dbc.Row([html.Hr(), html.Div(alt_hist)]),
+            dbc.Row([
+                html.Hr(),
+                html.H5(
+                    hist_title,
+                    style={"textAlign": "center"}
+                ),
+                html.Div(alt_hist)
+            ]),
         ],
     ),
 ]

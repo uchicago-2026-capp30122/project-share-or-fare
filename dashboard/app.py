@@ -481,6 +481,13 @@ def update_graph(row_chosen):
     chart = distribution_of_rides(df, row_chosen, dropdown_options)
     return chart.to_dict()
 
+@callback(
+    Output(component_id="hist_title", component_property="children"),
+    Input(component_id="xaxis-column", component_property="value"),
+)
+def update_graph_title(row_chosen):
+    return "Distribution of " + dropdown_options[row_chosen]
+
 
 # Final layout
 tab_selected_style = {"fontWeight": "bold"}
