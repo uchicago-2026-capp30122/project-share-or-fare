@@ -6,7 +6,7 @@ We analyzed Chicago rideshare trips to understand when, where, and even why resi
 
 ## Execution
 To run the project dashboard:  
-1. Unzip the dataset of neighborhoods: `gunzip neighborhood_route_data.csv.gz`  
+1. Unzip the dataset of neighborhoods: `uv run gunzip data/neighborhood_route_data.csv.gz`  
 
 2. Run the app from the top-level directory: `uv run -m dashboard.app`
 
