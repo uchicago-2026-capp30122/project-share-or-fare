@@ -1,18 +1,16 @@
-import pandas as pd
 import html
-from dash import html, dcc
-import dash_bootstrap_components as dbc
+
 import altair as alt
+import dash_bootstrap_components as dbc
 import dash_vega_components as dvc
-from .visualization.transform import log_transform_time, get_text
+from app import df
+from dash import dcc, html
+
 from .visualization.altair_charts import (
     distribution_of_ratio,
     transit_rideshare_comparison,
 )
-
-
-df = pd.read_csv("./data/rideshare_transit_data.csv")
-df = log_transform_time(df)
+from .visualization.transform import get_text
 
 alt.data_transformers.disable_max_rows()
 

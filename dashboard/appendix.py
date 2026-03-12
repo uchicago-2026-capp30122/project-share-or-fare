@@ -1,10 +1,12 @@
-import pandas as pd
 import html
-from dash import html
+
 import dash_bootstrap_components as dbc
 import dash_vega_components as dvc
-from .visualization.transform import log_transform_time, get_text
+import pandas as pd
+from dash import html
+
 from .visualization.altair_charts import rides_by_month
+from .visualization.transform import get_text, log_transform_time
 
 df = pd.read_csv("./data/rideshare_transit_data.csv")
 df = log_transform_time(df)

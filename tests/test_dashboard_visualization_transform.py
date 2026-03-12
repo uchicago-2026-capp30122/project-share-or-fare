@@ -1,11 +1,13 @@
-import pytest
-import pandas as pd
 from unittest.mock import patch
+
+import pandas as pd
+import pytest
+
 from dashboard.visualization.transform import (
-    log_transform_time,
     dataset_sample,
-    weighted_median,
     get_text,
+    log_transform_time,
+    weighted_median,
 )
 
 

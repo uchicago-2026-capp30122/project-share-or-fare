@@ -1,10 +1,9 @@
 # cached_get.py
-import httpx
-import time
-from datetime import datetime
-from pathlib import Path
 import os
+import time
+from pathlib import Path
 
+import httpx
 
 # GLOBALS
 API_KEY = os.environ["API_KEY"]  # DO NOT change this line!

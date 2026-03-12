@@ -1,9 +1,9 @@
 import html
-from dash import html
+
 import dash_bootstrap_components as dbc
+from dash import html
 
 from .visualization.transform import get_text
-
 
 discussion_text = get_text("dashboard/text/discussion.txt")
 

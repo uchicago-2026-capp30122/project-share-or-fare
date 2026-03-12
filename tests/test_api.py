@@ -1,5 +1,7 @@
-import pytest
 from pathlib import Path
+
+import pytest
+
 from api.parse_response import parse_response
 
 TEST_FILES = Path(__file__).parent.parent / "tests/test_files"
