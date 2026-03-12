@@ -1,8 +1,8 @@
+import csv
+from pathlib import Path
+
 from .cached_get import cached_get
 from .parse_response import parse_response
-import json
-from pathlib import Path
-import csv
 
 ####### CHANGE THESE PARAMETERS ###############################################
 #### 1. Set API Key

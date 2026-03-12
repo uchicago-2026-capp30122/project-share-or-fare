@@ -1,8 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib
-import datetime as dt
-from zoneinfo import ZoneInfo
 
 # Update random state before running
 SAMPLED = []

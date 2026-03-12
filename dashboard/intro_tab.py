@@ -1,29 +1,18 @@
-import pandas as pd
 import html
-from dash import html, dcc
 
 import dash_bootstrap_components as dbc
-
 import dash_vega_components as dvc
-from .visualization.transform import log_transform_time, get_text
+from app import dropdown_options
+from dash import dcc, html
 
+from .visualization.transform import get_text
 
+# Load text and data
 data_text = get_text("dashboard/text/data.txt")
 intro_text = get_text("dashboard/text/intro.txt")
 
-df = pd.read_csv("./data/rideshare_transit_data.csv")
-df = log_transform_time(df)
 
-dropdown_options = {
-    "rideshareTime": "Rideshare Trip Time (Minutes)",
-    "totalTransitTime": "Corresponding Transit Trip Time (Minutes)",
-    "Log Rideshare Min": "Log of Rideshare Trip Time (Minutes)",
-    "Log Transit Min": "Log of Transit Trip Time (Minutes)",
-    "Float Trip Miles": "Rideshare Trip Distance (Miles)",
-}
-
-
-# Altair Histogram
+# Prep Ineractive Altair Histogram
 alt_hist = (
     dvc.Vega(
         id="altair-hist",
@@ -32,8 +21,8 @@ alt_hist = (
         style={"display": "flex", "justifyContent": "center", "width": "100%"},
     ),
 )
-
 hist_title = html.Div(id="hist_title", children=[])
+
 
 # Page components
 intro = [
@@ -57,7 +46,7 @@ intro = [
     html.Div(children=intro_text, style={"white-space": "pre-wrap"}),
 ]
 
-hist1 = [
+intro_histogram = [
     html.Hr(),
     html.H3(children="A Brief Overview of Our Data"),
     html.Div(children=data_text, style={"white-space": "pre-wrap"}),
@@ -95,7 +84,7 @@ hist1 = [
 ]
 
 
-exploratory = [
+intro_page = [
     html.Div(
         [
             dbc.Row(
@@ -104,7 +93,7 @@ exploratory = [
                         dbc.Stack(
                             [
                                 dbc.Row(intro),
-                                dbc.Row(hist1),
+                                dbc.Row(intro_histogram),
                             ],
                             gap=3,
                         ),

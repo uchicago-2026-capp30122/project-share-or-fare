@@ -1,6 +1,6 @@
 import pandas as pd
-from shapely.geometry import Point
 from shapely import from_wkt
+from shapely.geometry import Point
 
 # Define column names for convenience
 PICKUP_LAT = "Pickup Centroid Latitude"

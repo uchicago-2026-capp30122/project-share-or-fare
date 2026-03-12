@@ -1,5 +1,6 @@
-import pandas as pd
 import altair as alt
+import pandas as pd
+
 from .transform import dataset_sample, weighted_median
 
 

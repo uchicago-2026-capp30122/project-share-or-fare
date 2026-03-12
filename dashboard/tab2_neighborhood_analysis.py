@@ -1,15 +1,17 @@
-import pandas as pd
 import html
-from dash import html
+
 import dash_bootstrap_components as dbc
 import dash_vega_components as dvc
-from .visualization.transform import weighted_avg, get_text
+import pandas as pd
+from dash import html
+
 from .visualization.altair_charts import (
-    distance_vs_demand_quadrants,
-    transit_penalty_heatmap,
-    rideshare_count_heatmap,
     corridor_price,
+    distance_vs_demand_quadrants,
+    rideshare_count_heatmap,
+    transit_penalty_heatmap,
 )
+from .visualization.transform import get_text, weighted_avg
 
 # Load captions
 frequency_heatmap_text = get_text("dashboard/text/frequency_heatmap.txt")

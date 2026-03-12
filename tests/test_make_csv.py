@@ -1,6 +1,8 @@
-import pytest
-import pandas as pd
 import io
+
+import pandas as pd
+import pytest
+
 import data_processing.make_csv as mc
 
 

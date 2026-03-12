@@ -1,23 +1,24 @@
-from flask import Flask, request, jsonify
-import folium
-from folium import GeoJson, GeoJsonTooltip
-import pandas as pd
-from shapely import from_wkt
 import html
-from dash import Dash, html, dcc, callback, Output, Input
-import numpy as np
-import dash_bootstrap_components as dbc
-from .visualization.transform import weighted_avg, log_transform_time
-from .visualization.altair_charts import distribution_of_rides
 
-# Import static Components
-from .js import JS_CODE, CSS_STYLING
-from .intro_tab import exploratory
-from .tab1_transit_rideshare import ratio
-from .tab2_neighborhood_analysis import neighborhood_tab
+import dash_bootstrap_components as dbc
+import folium
+import numpy as np
+import pandas as pd
+from dash import Dash, Input, Output, callback, dcc, html
+from flask import Flask, jsonify, request
+from folium import GeoJson, GeoJsonTooltip
+from shapely import from_wkt
+
 from .appendix import appendix
 from .discussion import discussion
+from .intro_tab import intro_page
 
+# Import static Components
+from .js import CSS_STYLING, JS_CODE
+from .tab1_transit_rideshare import ratio
+from .tab2_neighborhood_analysis import neighborhood_tab
+from .visualization.altair_charts import distribution_of_rides
+from .visualization.transform import log_transform_time, weighted_avg
 
 ################################################################################
 #
@@ -497,7 +498,7 @@ app.layout = dcc.Tabs(
             label="Project Share or Fare",
             value="main",
             selected_style=tab_selected_style,
-            children=exploratory,
+            children=intro_page,
         ),
         dcc.Tab(
             label="1. Comparison of Transit and Rideshare Times",

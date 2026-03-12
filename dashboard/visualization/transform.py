@@ -1,6 +1,7 @@
-import pandas as pd
-import random
 import math
+import random
+
+import pandas as pd
 
 
 def weighted_avg(group, value_col, weight_col):
