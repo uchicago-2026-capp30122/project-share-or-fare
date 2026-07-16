@@ -12,13 +12,14 @@ from shapely import from_wkt
 from .appendix import appendix
 from .discussion import discussion
 from .intro_tab import intro_page
+from .utils import df, dropdown_options
 
 # Import static Components
 from .js import CSS_STYLING, JS_CODE
 from .tab1_transit_rideshare import ratio
 from .tab2_neighborhood_analysis import neighborhood_tab
 from .visualization.altair_charts import distribution_of_rides
-from .visualization.transform import log_transform_time, weighted_avg
+from .visualization.transform import weighted_avg
 
 ################################################################################
 #
@@ -459,18 +460,6 @@ map_display = html.Div(
 ################################################################################
 # Intro tab: Interactive Dropdown
 ###############################################################################
-df = pd.read_csv("./data/rideshare_transit_data.csv")
-df = log_transform_time(df)
-
-dropdown_options = {
-    "rideshareTime": "Rideshare Trip Time (Minutes)",
-    "totalTransitTime": "Corresponding Transit Trip Time (Minutes)",
-    "Log Rideshare Min": "Log of Rideshare Trip Time (Minutes)",
-    "Log Transit Min": "Log of Transit Trip Time (Minutes)",
-    "Float Trip Miles": "Rideshare Trip Distance (Miles)",
-}
-
-
 # Add controls to build the interaction with dropdown options in intro tab
 @callback(
     Output(component_id="altair-hist", component_property="spec"),

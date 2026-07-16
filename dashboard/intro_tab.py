@@ -2,8 +2,8 @@ import html
 
 import dash_bootstrap_components as dbc
 import dash_vega_components as dvc
-from app import dropdown_options
 from dash import dcc, html
+from .utils import dropdown_options
 
 from .visualization.transform import get_text
 

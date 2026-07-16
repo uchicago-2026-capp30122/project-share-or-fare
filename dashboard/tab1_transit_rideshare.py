@@ -3,7 +3,7 @@ import html
 import altair as alt
 import dash_bootstrap_components as dbc
 import dash_vega_components as dvc
-from app import df
+from .utils import df
 from dash import dcc, html
 
 from .visualization.altair_charts import (
