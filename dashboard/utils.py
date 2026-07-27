@@ -11,6 +11,8 @@ df = df.drop(columns=[
     "Dropoff Census Tract",
     # add any other unused columns here
 ])
+float_cols = df.select_dtypes(include="float64").columns
+df[float_cols] = df[float_cols].astype("float32")
 df = log_transform_time(df)
 
 

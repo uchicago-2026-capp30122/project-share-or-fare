@@ -104,13 +104,14 @@ def distribution_of_ratio(df: pd.DataFrame):
 
     Author: Sabrina
     """
+    short_df = dataset_sample(df, 100)
     # Create score bins by rounding to 1 decimal place
-    df["transitPenalty"] = df["transitPenalty"].round(1)
+    short_df["transitPenalty"] = short_df["transitPenalty"].round(1)
 
-    median = weighted_median(df, "transitPenalty")
+    median = weighted_median(short_df, "transitPenalty")
 
     chart = (
-        alt.Chart(df)
+        alt.Chart(short_df)
         .mark_bar()
         .encode(
             alt.X(
