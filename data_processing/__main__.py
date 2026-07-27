@@ -125,6 +125,15 @@ def main():
         neighborhood_route_data = prep_data_for_map(
             rideshare_transit_data_neighborhoods_clean, neighborhood_boundaries
         )
+        
+        # Drop polygon text and redundant merge columns — this data already
+        # exists in Neighborhoods_2012b_20260227.csv, loaded separately in app.py
+        neighborhood_route_data = neighborhood_route_data.drop(columns=[
+            "Pickup Neighborhood Polygon",
+            "Dropoff Neighborhood Polygon",
+            "PRI_NEIGH_x",
+            "PRI_NEIGH_y",
+        ])
 
         neighborhood_route_data.to_csv(
             "./data/neighborhood_route_data.csv", index=False

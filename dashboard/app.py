@@ -41,27 +41,9 @@ app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.LUX])
 
 neighborhood_boundaries = pd.read_csv("data/Neighborhoods_2012b_20260227.csv")
 neighborhood_route_data = pd.read_csv("data/neighborhood_route_data.csv")
-
-# Get Pickup Neighbhorhood level data and take weighted averages
-pickup_neighborhoods = (
-    neighborhood_route_data.groupby(["Pickup Neighborhood"])
-    .apply(
-        lambda g: pd.Series(
-            {
-                "totalTransitTime_wavg": weighted_avg(
-                    g, "totalTransitTime_wavg", "Count"
-                ),
-                "rideshareTime_wavg": weighted_avg(g, "rideshareTime_wavg", "Count"),
-                "tripCost_wavg": weighted_avg(g, "tripCost_wavg", "Count"),
-                "transitPenalty_wavg": weighted_avg(g, "transitPenalty_wavg", "Count"),
-                "distance_wavg": weighted_avg(g, "distance_wavg", "Count"),
-                "Count": g["Count"].sum(),
-            }
-        )
-    )
-    .reset_index()
+neighborhood_polygon_lookup = dict(
+    zip(neighborhood_boundaries["PRI_NEIGH"], neighborhood_boundaries["the_geom"])
 )
-
 
 current_neighborhood = ""
 
@@ -133,8 +115,8 @@ def neighborhood():
     # Add geometries and features of each destination to dictionary
     features = []
     for _, row in top5_destinations.iterrows():
-        pickup_poly = from_wkt(row["Pickup Neighborhood Polygon"])
-        dropoff_poly = from_wkt(row["Dropoff Neighborhood Polygon"])
+        pickup_poly = from_wkt(neighborhood_polygon_lookup[row["Pickup Neighborhood"]])
+        dropoff_poly = from_wkt(neighborhood_polygon_lookup[row["Dropoff Neighborhood"]])    
         features.append(
             {
                 "type": "Feature",
