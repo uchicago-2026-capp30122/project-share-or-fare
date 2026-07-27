@@ -3,7 +3,16 @@ import pandas as pd
 from .visualization.transform import log_transform_time
 
 df = pd.read_csv("./data/rideshare_transit_data.csv")
+df["Pickup Neighborhood"] = df["Pickup Neighborhood"].astype("category")
+df["Dropoff Neighborhood"] = df["Dropoff Neighborhood"].astype("category")
+df["modes"] = df["modes"].astype("category")
+df = df.drop(columns=[
+    "Pickup Census Tract",
+    "Dropoff Census Tract",
+    # add any other unused columns here
+])
 df = log_transform_time(df)
+
 
 dropdown_options = {
     "rideshareTime": "Rideshare Trip Time (Minutes)",
