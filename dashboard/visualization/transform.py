@@ -3,6 +3,42 @@ import random
 
 import pandas as pd
 
+import numpy as np
+
+def bin_and_aggregate(
+    df: pd.DataFrame, col: str, step: float, domain: tuple, weight_col: str = "Count"
+) -> pd.DataFrame:
+    """
+    Pre-bins `col` into fixed-width bins over `domain` and sums `weight_col`
+    per bin across the FULL dataset. Replaces row-level random sampling with
+    exact, pre-aggregated bins for fast + accurate histogram rendering.
+
+    Arguments:
+        df: A pandas dataframe with `col` and `weight_col`
+        col: The column to bin
+        step: Bin width
+        domain: (min, max) range to bin over; rows outside are dropped
+        weight_col: Column to sum within each bin (defaults to "Count")
+
+    Returns: A dataframe with one row per bin: `bin_start`, `bin_end`, and
+        the summed weight (named `weight_col`)
+    """
+    lo, hi = domain
+    edges = np.arange(lo, hi + step, step)
+
+    subset = df[(df[col] >= lo) & (df[col] < hi)]
+    bins = pd.cut(subset[col], bins=edges, right=False, include_lowest=True)
+
+    agg = (
+        subset.groupby(bins, observed=True)[weight_col]
+        .sum()
+        .reset_index()
+    )
+    agg["bin_start"] = agg[col].apply(lambda b: b.left).astype(float)
+    agg["bin_end"] = agg[col].apply(lambda b: b.right).astype(float)
+    agg = agg.drop(columns=[col])
+
+    return agg
 
 def weighted_avg(group, value_col, weight_col):
     """

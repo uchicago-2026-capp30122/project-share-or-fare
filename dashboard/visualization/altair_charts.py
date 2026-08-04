@@ -7,22 +7,11 @@ from .transform import dataset_sample, weighted_median
 ############################# Trip Level Analysis #############################
 def distribution_of_rides(df: pd.DataFrame, row_chosen: str, dropdown_options: dict):
     """
-    Creates a histogram of the distribution of ride times
+    Creates a histogram of the distribution of ride times, pre-binned in
+    pandas over the full dataset (no sampling).
 
-    Arguments:
-        df: a pandas dataframe with rideshare and transit data
-        row_chosen: The dimension along which to create the histogram
-        dropdown_options: A dictionary matching the row options to their
-            lable names
-
-    Returns: An altair chart
-
-    Author: Sabrina
+    Author: Sabrina and Molly
     """
-    short_df = dataset_sample(df, 10)
-    total_rides = short_df["Count"].sum()
-    short_df["Percentage"] = (short_df["Count"] / total_rides) * 100
-
     step_size = {
         "rideshareTime": 5,
         "totalTransitTime": 5,
@@ -39,16 +28,24 @@ def distribution_of_rides(df: pd.DataFrame, row_chosen: str, dropdown_options: d
         "Float Trip Miles": [0, 26],
     }
 
+    step = step_size[row_chosen]
+    domain = domain_range[row_chosen]
+
+    binned = bin_and_aggregate(df, row_chosen, step, domain)
+    total = binned["Count"].sum()
+    binned["Percentage"] = binned["Count"] / total * 100
+
     chart = (
-        alt.Chart(short_df)
+        alt.Chart(binned)
         .mark_bar()
         .encode(
             alt.X(
-                f"{row_chosen}:Q",
+                "bin_start:Q",
                 title=dropdown_options[row_chosen],
-                bin=alt.Bin(step=step_size[row_chosen]),
-            ).scale(domain=domain_range[row_chosen]),
-            alt.Y("sum(Percentage):Q", title="Percentage of Rides"),
+                bin=alt.Bin(binned=True, step=step),
+            ).scale(domain=domain),
+            alt.X2("bin_end:Q"),
+            alt.Y("Percentage:Q", title="Percentage of Rides"),
         )
         .configure_axis(grid=False)
     )
@@ -94,24 +91,19 @@ def transit_rideshare_comparison(df: pd.DataFrame):
 
 def distribution_of_ratio(df: pd.DataFrame):
     """
-    Creates a hisogram of the transit to rideshare time ratio
+    Creates a histogram of the transit to rideshare time ratio, aggregated
+    over the full dataset (no sampling).
 
-    Arguments:
-        df: The pandas dataframe with rideshare and transit data
-
-    Returns: An altair chart, histogram of distribution of transit penalty score
-        with 1:1 and median marked
-
-    Author: Sabrina
+    Author: Sabrina and Molly
     """
-    short_df = dataset_sample(df, 100)
-    # Create score bins by rounding to 1 decimal place
-    short_df["transitPenalty"] = short_df["transitPenalty"].round(1)
+    df = df.copy()
+    df["transitPenalty"] = df["transitPenalty"].round(1)
 
-    median = weighted_median(short_df, "transitPenalty")
+    binned = df.groupby("transitPenalty", as_index=False)["Count"].sum()
+    median = weighted_median(binned, "transitPenalty")
 
     chart = (
-        alt.Chart(short_df)
+        alt.Chart(binned)
         .mark_bar()
         .encode(
             alt.X(
@@ -119,25 +111,15 @@ def distribution_of_ratio(df: pd.DataFrame):
                 title="Transit Penalty Score (Transit Time / Rideshare Time)",
                 scale=alt.Scale(domain=[k / 10 for k in range(4, 51)]),
             ),
-            alt.Y("sum(Count):Q", title="Number of Rides"),
+            alt.Y("Count:Q", title="Number of Rides"),
         )
         .interactive()
         + alt.Chart(pd.DataFrame({"transitPenalty": [1]}))
         .mark_rule(color="lightgrey")
-        .encode(
-            alt.X(
-                "transitPenalty:O",
-                title="Transit Penalty Score (Transit Time / Rideshare Time)",
-            )
-        )
+        .encode(alt.X("transitPenalty:O", title="Transit Penalty Score (Transit Time / Rideshare Time)"))
         + alt.Chart(pd.DataFrame({"transitPenalty": [median]}))
         .mark_rule(color="red")
-        .encode(
-            alt.X(
-                "transitPenalty:O",
-                title="Transit Penalty Score (Transit Time / Rideshare Time)",
-            )
-        )
+        .encode(alt.X("transitPenalty:O", title="Transit Penalty Score (Transit Time / Rideshare Time)"))
     ).configure_axis(grid=False)
 
     return chart
