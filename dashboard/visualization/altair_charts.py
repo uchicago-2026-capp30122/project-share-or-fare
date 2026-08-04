@@ -1,7 +1,7 @@
 import altair as alt
 import pandas as pd
 
-from .transform import dataset_sample, weighted_median
+from .transform import dataset_sample, weighted_median, bin_and_aggregate
 
 
 ############################# Trip Level Analysis #############################
@@ -31,9 +31,12 @@ def distribution_of_rides(df: pd.DataFrame, row_chosen: str, dropdown_options: d
     step = step_size[row_chosen]
     domain = domain_range[row_chosen]
 
+    # Pre-bin the dataset using your transform function
     binned = bin_and_aggregate(df, row_chosen, step, domain)
+    
+    # Calculate percentage based on the pre-aggregated counts
     total = binned["Count"].sum()
-    binned["Percentage"] = binned["Count"] / total * 100
+    binned["Percentage"] = (binned["Count"] / total) * 100
 
     chart = (
         alt.Chart(binned)
@@ -91,39 +94,55 @@ def transit_rideshare_comparison(df: pd.DataFrame):
 
 def distribution_of_ratio(df: pd.DataFrame):
     """
-    Creates a histogram of the transit to rideshare time ratio, aggregated
-    over the full dataset (no sampling).
+    Creates a cleaner histogram of the transit to rideshare time ratio, 
+    truncated to remove long-tail outliers and formatted cleanly.
 
     Author: Sabrina and Molly
     """
     df = df.copy()
+    
+    # Round to 1 decimal place for clean binning
     df["transitPenalty"] = df["transitPenalty"].round(1)
 
+    # Truncate the long tail (e.g., keep ratios between 0.4 and 5.0)
+    df = df[(df["transitPenalty"] >= 0.4) & (df["transitPenalty"] <= 5.0)]
+
+    # Aggregate counts across the full dataset
     binned = df.groupby("transitPenalty", as_index=False)["Count"].sum()
     median = weighted_median(binned, "transitPenalty")
 
-    chart = (
+    # Base chart for bars with clean axis formatting
+    bar_chart = (
         alt.Chart(binned)
         .mark_bar()
         .encode(
             alt.X(
-                "transitPenalty:O",
+                "transitPenalty:Q",  # Quantitative allows clean numeric formatting
                 title="Transit Penalty Score (Transit Time / Rideshare Time)",
-                scale=alt.Scale(domain=[k / 10 for k in range(4, 51)]),
+                axis=alt.Axis(format=".1f", tickCount=10),
+                bin=alt.Bin(step=0.1, binned=True)
             ),
             alt.Y("Count:Q", title="Number of Rides"),
         )
-        .interactive()
-        + alt.Chart(pd.DataFrame({"transitPenalty": [1]}))
-        .mark_rule(color="lightgrey")
-        .encode(alt.X("transitPenalty:O", title="Transit Penalty Score (Transit Time / Rideshare Time)"))
-        + alt.Chart(pd.DataFrame({"transitPenalty": [median]}))
-        .mark_rule(color="red")
-        .encode(alt.X("transitPenalty:O", title="Transit Penalty Score (Transit Time / Rideshare Time)"))
-    ).configure_axis(grid=False)
+    )
+
+    # Rule for 1:1 ratio line
+    rule_1 = (
+        alt.Chart(pd.DataFrame({"transitPenalty": [1.0]}))
+        .mark_rule(color="lightgrey", strokeWidth=2)
+        .encode(alt.X("transitPenalty:Q"))
+    )
+
+    # Rule for median line
+    rule_median = (
+        alt.Chart(pd.DataFrame({"transitPenalty": [median]}))
+        .mark_rule(color="red", strokeWidth=2)
+        .encode(alt.X("transitPenalty:Q"))
+    )
+
+    chart = (bar_chart + rule_1 + rule_median).interactive().configure_axis(grid=False)
 
     return chart
-
 
 def rides_by_month(df: pd.DataFrame):
     """

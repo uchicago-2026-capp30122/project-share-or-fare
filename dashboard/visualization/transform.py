@@ -64,14 +64,6 @@ def log_transform_time(df: pd.DataFrame) -> pd.DataFrame:
     df["Log Rideshare Min"] = (df["rideshareTime"]).apply(math.log10)
     df["Log Transit Min"] = (df["totalTransitTime"]).apply(math.log10)
 
-    df["Log Rideshare Min"] = (df["Log Rideshare Min"]).apply(
-        lambda x: math.trunc(x * 10) / 10
-    )
-
-    df["Log Transit Min"] = (df["Log Transit Min"]).apply(
-        lambda x: math.trunc(x * 10) / 10
-    )
-
     return df
 
 
